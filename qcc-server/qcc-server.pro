@@ -10,8 +10,12 @@ QT -= gui
 TARGET = qcc-server
 CONFIG += console
 CONFIG -= app_bundle
+CONFIG(debug, debug|release):DEFINES += DEBUG
 
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+HEADERS += server.h
+
+SOURCES += main.cpp \
+           server.cpp
