@@ -15,7 +15,9 @@ CONFIG(debug, debug|release):DEFINES += DEBUG
 TEMPLATE = app
 
 
-HEADERS += server.h
+HEADERS += server.h \
+           user.h
 
 SOURCES += main.cpp \
-           server.cpp
+           server.cpp \
+           user.cpp

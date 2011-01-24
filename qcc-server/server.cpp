@@ -1,24 +1,95 @@
 #include "server.h"
+#include "user.h"
 
 #include <QTcpSocket>
+#include <QDebug>
 
 Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
-
 }
 
 void Server::incomingConnection(int socketDescriptor)
 {
-#ifdef DEBUG
-    qDebug("Server::incomingConnection(%i)", socketDescriptor);
-#endif
-
-    QTcpSocket *socket = new QTcpSocket(this);
-    socket->setSocketDescriptor(socketDescriptor);
-    addPendingConnection(socket);
+    QTcpSocket *client = new QTcpSocket(this);
+    client->setSocketDescriptor(socketDescriptor);
+    addPendingConnection(client);
 
 #ifdef DEBUG
-    qDebug("Server::incomingConnection: %s:%i", qPrintable(socket->peerAddress().toString()), socket->peerPort());
+    qDebug("Server::incomingConnection(%i): %s:%i", socketDescriptor, qPrintable(client->peerAddress().toString()), client->peerPort());
 #endif
+
+    connect(client, SIGNAL(readyRead()), SLOT(client_readyRead()));
+    connect(client, SIGNAL(disconnected()), SLOT(client_disconnected()));
+    m_clients.insert(client, NULL);
+
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_0);
+    out << (int)ConnectionAccepted;
+    client->write(data);
+}
+
+void Server::client_readyRead()
+{
+    QTcpSocket *client = qobject_cast<QTcpSocket*>(sender());
+    if (!client) {
+        qWarning("Server::client_readyRead: Cast of sender() to QTcpSocket* failed.");
+        return;
+    }
+    if (client->bytesAvailable() < sizeof(MessageType)) {
+        qWarning("Server::client_readyRead: Not enough data to read.");
+        return;
+    }
+
+    QDataStream in(client);
+    in.setVersion(QDataStream::Qt_4_0);
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_0);
+
+    int type;
+    in >> type;
+#ifdef DEBUG
+    qDebug() << "client_readyRead: MessageType = " << type;
+#endif
+    switch ((MessageType)type) {
+    case UserAuthentication:
+    {
+        QString username, password;
+        in >> username >> password;
+        // TODO check authentication
+        m_clients[client] = new User(username, password);
+        out << (int)AuthenticationSuccess;
+        //out << (int)AuthenticationFailure;
+        break;
+    }
+    case Message:
+        // TODO read and forward message
+        out << (int)MessageSuccess;
+        break;
+    default:
+        qWarning("Server::client_readyRead: Illegal MessageType %i.", type);
+        out << (int)IllegalMessage;
+    }
+    client->write(data);
+}
+
+void Server::client_disconnected()
+{
+    QTcpSocket *client = qobject_cast<QTcpSocket*>(sender());
+    if (!client) {
+        qWarning("Server::client_disconnected: Cast of sender() to QTcpSocket* failed.");
+        return;
+    }
+    User *user = m_clients.value(client);
+    QString username = user ? user->getUsername() : "[no user object]";
+
+#ifdef DEBUG
+    qDebug("client disconnected: %s (%s:%i)", qPrintable(username), qPrintable(client->peerAddress().toString()), client->peerPort());
+#endif
+
+    m_clients.remove(client);
+    if (user)
+        delete user;
 }

@@ -2,6 +2,9 @@
 #define SERVER_H
 
 #include <QTcpServer>
+#include <QHash>
+
+class User;
 
 class Server : public QTcpServer
 {
@@ -11,9 +14,25 @@ public:
 
 signals:
 
-public slots:
+private slots:
+    void client_readyRead();
+    void client_disconnected();
 
 private:
+    enum MessageType {
+        ConnectionAccepted,
+        ConnectionRefused,
+        UserAuthentication,
+        AuthenticationSuccess,
+        AuthenticationFailure,
+        Message,
+        MessageSuccess,
+        MessageFailure,
+        IllegalMessage = -1
+    };
+
+    QHash<QTcpSocket*, User*> m_clients;
+
     void incomingConnection(int socketDescriptor);
 
 };
