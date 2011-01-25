@@ -10,10 +10,12 @@ TARGET = qcc-core
 TEMPLATE = lib
 CONFIG += staticlib create_prl
 
+
+HEADERS += qccnamespace.h
+
 SOURCES +=
 
-HEADERS += \
-    qccnamespace.h
+
 unix:!symbian {
     maemo5 {
         target.path = /opt/usr/lib
