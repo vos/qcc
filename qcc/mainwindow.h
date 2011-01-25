@@ -29,7 +29,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QTcpSocket socket;
+    QTcpSocket m_socket;
+    quint32 m_blockSize;
 
 };
 

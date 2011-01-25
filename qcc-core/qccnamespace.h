@@ -9,6 +9,8 @@ namespace Qcc
         UserAuthentication,
         AuthenticationSuccess,
         AuthenticationFailure,
+        RequestContactList,
+        ContactList,
         Message,
         MessageSuccess,
         MessageFailure,

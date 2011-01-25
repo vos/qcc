@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QStringList>
+#include <QDebug>
+
 #include "qccnamespace.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -9,12 +12,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(&socket, SIGNAL(connected()), SLOT(socket_connected()));
-    connect(&socket, SIGNAL(disconnected()), SLOT(socket_disconnected()));
-    connect(&socket, SIGNAL(readyRead()), SLOT(socket_readyRead()));
-    connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(socket_error(QAbstractSocket::SocketError)));
+    connect(&m_socket, SIGNAL(connected()), SLOT(socket_connected()));
+    connect(&m_socket, SIGNAL(disconnected()), SLOT(socket_disconnected()));
+    connect(&m_socket, SIGNAL(readyRead()), SLOT(socket_readyRead()));
+    connect(&m_socket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(socket_error(QAbstractSocket::SocketError)));
 #ifdef DEBUG
-    connect(&socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(socket_stateChanged(QAbstractSocket::SocketState)));
+    connect(&m_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(socket_stateChanged(QAbstractSocket::SocketState)));
 #endif
 }
 
@@ -46,24 +49,32 @@ void MainWindow::socket_disconnected()
 void MainWindow::socket_readyRead()
 {
 #ifdef DEBUG
-    qDebug("MainWindow::socket_readyRead: %li bytes available", socket.bytesAvailable());
+    qDebug("MainWindow::socket_readyRead: %li bytes available", (long)m_socket.bytesAvailable());
 #endif
-    if (socket.bytesAvailable() < sizeof(qint32)) {
-        qWarning("MainWindow::socket_readyRead: Not enough data to read");
-        return;
-    }
 
-    QDataStream in(&socket);
+    QDataStream in(&m_socket);
     in.setVersion(QDataStream::Qt_4_0);
+    if (m_blockSize == 0) {
+        if (m_socket.bytesAvailable() < (int)sizeof(quint32))
+            return;
+        in >> m_blockSize;
+    }
+    if (m_socket.bytesAvailable() < m_blockSize)
+        return;
+    m_blockSize = 0; // reset block size
+
     QByteArray data;
     QDataStream out(&data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_0);
+    out << (quint32)0;
 
     qint32 type;
     in >> type;
+
 #ifdef DEBUG
     qDebug("MainWindow::socket_readyRead: MessageType = %i", type);
 #endif
+
     switch ((Qcc::MessageType)type) {
     case Qcc::ConnectionAccepted:
         out << (qint32)Qcc::UserAuthentication;
@@ -72,10 +83,18 @@ void MainWindow::socket_readyRead()
     case Qcc::ConnectionRefused:
         break;
     case Qcc::AuthenticationSuccess:
+        out << (qint32)Qcc::RequestContactList;
         ui->stackedWidget->setCurrentIndex(1);
         break;
     case Qcc::AuthenticationFailure:
         break;
+    case Qcc::ContactList:
+    {
+        QStringList contacts;
+        in >> contacts;
+        qDebug() << "contacts: " << contacts;
+        break;
+    }
     case Qcc::Message:
         break;
     case Qcc::MessageSuccess:
@@ -87,14 +106,17 @@ void MainWindow::socket_readyRead()
         return;
     }
 
-    if (data.length() > 0)
-        socket.write(data);
+    if (data.length() > (int)sizeof(quint32)) {
+        out.device()->seek(0);
+        out << (quint32)(data.size() - sizeof(quint32));
+        m_socket.write(data);
+    }
 }
 
 void MainWindow::socket_error(QAbstractSocket::SocketError error)
 {
 #ifdef DEBUG
-    qDebug("MainWindow::socket_error(%i) => %s", error, qPrintable(socket.errorString()));
+    qDebug("MainWindow::socket_error(%i) => %s", error, qPrintable(m_socket.errorString()));
 #endif
 
     ui->loginButton->setEnabled(true);
@@ -109,6 +131,7 @@ void MainWindow::socket_stateChanged(QAbstractSocket::SocketState state)
 
 void MainWindow::on_loginButton_clicked()
 {
-    socket.connectToHost("127.0.0.1", 12345);
+    m_blockSize = 0;
+    m_socket.connectToHost("127.0.0.1", 12345);
     ui->loginButton->setEnabled(false);
 }

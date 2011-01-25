@@ -20,6 +20,7 @@ private slots:
     void client_disconnected();
 
 private:
+    QHash<QTcpSocket*, quint32> m_blockSizes;
     QHash<QTcpSocket*, User*> m_clients;
 
     void incomingConnection(int socketDescriptor);
