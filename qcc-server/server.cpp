@@ -1,3 +1,4 @@
+#include "qccnamespace.h"
 #include "server.h"
 #include "user.h"
 
@@ -26,7 +27,7 @@ void Server::incomingConnection(int socketDescriptor)
     QByteArray data;
     QDataStream out(&data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_0);
-    out << (int)ConnectionAccepted;
+    out << (int)Qcc::ConnectionAccepted;
     client->write(data);
 }
 
@@ -37,7 +38,7 @@ void Server::client_readyRead()
         qWarning("Server::client_readyRead: Cast of sender() to QTcpSocket* failed.");
         return;
     }
-    if (client->bytesAvailable() < sizeof(MessageType)) {
+    if (client->bytesAvailable() < sizeof(Qcc::MessageType)) {
         qWarning("Server::client_readyRead: Not enough data to read.");
         return;
     }
@@ -53,24 +54,24 @@ void Server::client_readyRead()
 #ifdef DEBUG
     qDebug() << "client_readyRead: MessageType = " << type;
 #endif
-    switch ((MessageType)type) {
-    case UserAuthentication:
+    switch ((Qcc::MessageType)type) {
+    case Qcc::UserAuthentication:
     {
         QString username, password;
         in >> username >> password;
         // TODO check authentication
         m_clients[client] = new User(username, password);
-        out << (int)AuthenticationSuccess;
+        out << (int)Qcc::AuthenticationSuccess;
         //out << (int)AuthenticationFailure;
         break;
     }
-    case Message:
+    case Qcc::Message:
         // TODO read and forward message
-        out << (int)MessageSuccess;
+        out << (int)Qcc::MessageSuccess;
         break;
     default:
         qWarning("Server::client_readyRead: Illegal MessageType %i.", type);
-        out << (int)IllegalMessage;
+        out << (int)Qcc::IllegalMessage;
     }
     client->write(data);
 }

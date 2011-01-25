@@ -9,6 +9,7 @@ class User;
 class Server : public QTcpServer
 {
     Q_OBJECT
+
 public:
     explicit Server(QObject *parent = 0);
 
@@ -19,18 +20,6 @@ private slots:
     void client_disconnected();
 
 private:
-    enum MessageType {
-        ConnectionAccepted,
-        ConnectionRefused,
-        UserAuthentication,
-        AuthenticationSuccess,
-        AuthenticationFailure,
-        Message,
-        MessageSuccess,
-        MessageFailure,
-        IllegalMessage = -1
-    };
-
     QHash<QTcpSocket*, User*> m_clients;
 
     void incomingConnection(int socketDescriptor);
