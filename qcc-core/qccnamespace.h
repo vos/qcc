@@ -6,14 +6,22 @@ namespace Qcc
     enum MessageType {
         ConnectionAccepted,
         ConnectionRefused,
-        UserAuthentication,
+        UserRegister,          // QString(username), QString(passwort|SHA-2), QString(name), QString(email)
+        RegisterSuccess,
+        RegisterFailure,       // QString(reason)
+        UserAuthentication,    // QString(username), QString(passwort|SHA-2)
         AuthenticationSuccess,
-        AuthenticationFailure,
+        AuthenticationFailure, // QString(reason)
+        RequestAuthorization,  // QString(username)
+        AuthorizationAccepted, // QString(username), qint32(status)
+        AuthorizationRejected, // QString(username)
         RequestContactList,
-        ContactList,
-        Message,
-        MessageSuccess,
-        MessageFailure,
+        ContactList,           // QString(username), qint32(status), ...
+        RemoveContact,         // QString(username)
+        ContactRemoved,        // QString(username)
+        Message,               // QString(receiver), QString(message), message-id?
+        MessageSuccess,        // message-id?
+        MessageFailure,        // message-id?
         IllegalMessage = -1
     };
 }
