@@ -97,7 +97,7 @@ void MainWindow::socket_readyRead()
     {
         qint32 contactCount;
         in >> contactCount;
-        for (int i = 0; i < contactCount; ++i) {
+        for (int i = 0; i < contactCount; i++) {
             QString username;
             qint32 status;
             in >> username >> status;

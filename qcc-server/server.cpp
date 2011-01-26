@@ -147,15 +147,15 @@ void Server::client_readyRead()
 #ifdef DEBUG
         qDebug("Server::client_readyRead: username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
-        User *user = m_users.contains(username) ? &m_users[username] : NULL;
-        if (user && user->matchPassword(password)) {
-            m_clients[client] = user;
+        User *u = m_users.contains(username) ? &m_users[username] : NULL;
+        if (u && u->matchPassword(password)) {
+            m_clients[client] = u;
             out << (qint32)Qcc::AuthenticationSuccess;
 #ifdef DEBUG
             qDebug("AuthenticationSuccess");
 #endif
         } else {
-            QString reason = "The username or password you entered is incorrect.";
+            const QString reason = "The username or password you entered is incorrect.";
             out << (qint32)Qcc::AuthenticationFailure << reason;
 #ifdef DEBUG
             qDebug("AuthenticationFailure: %s", qPrintable(reason));
@@ -170,8 +170,7 @@ void Server::client_readyRead()
         out << (qint32)contacts.count();
         foreach (const QString &contactName, contacts) {
             User contact = m_users.value(contactName);
-            if (contact.isValid())
-                out << contactName << (qint32)contact.getStatus();
+            out << contactName << (qint32)contact.getStatus();
         }
         break;
     }
