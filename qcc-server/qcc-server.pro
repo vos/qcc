@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT = core network xml
+QT = core network
 
 TARGET = qcc-server
 TEMPLATE = app

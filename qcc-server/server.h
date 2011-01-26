@@ -4,7 +4,7 @@
 #include <QTcpServer>
 #include <QHash>
 
-class User;
+#include "user.h"
 
 class Server : public QTcpServer
 {
@@ -12,6 +12,10 @@ class Server : public QTcpServer
 
 public:
     explicit Server(QObject *parent = 0);
+    ~Server();
+
+    void loadUsers();
+    void saveUsers();
 
 signals:
 
@@ -20,6 +24,7 @@ private slots:
     void client_disconnected();
 
 private:
+    QHash<QString, User> m_users;
     QHash<QTcpSocket*, quint32> m_blockSizes;
     QHash<QTcpSocket*, User*> m_clients;
 

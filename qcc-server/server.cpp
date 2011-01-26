@@ -1,14 +1,80 @@
 #include "qccnamespace.h"
 #include "server.h"
-#include "user.h"
 
 #include <QTcpSocket>
+#include <QFile>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 #include <QStringList>
 #include <QDebug>
 
 Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
+    loadUsers();
+    //saveUsers();
+}
+
+Server::~Server()
+{
+    saveUsers();
+}
+
+void Server::loadUsers()
+{
+    QFile file("users.xml");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning("Server::loadUsers(): cannot read file users.xml => %s", qPrintable(file.errorString()));
+        return;
+    }
+    m_users.clear();
+    QXmlStreamReader xml(&file);
+    while (!xml.atEnd()) {
+        if (!xml.readNextStartElement())
+            continue;
+        if (xml.name() == "user") {
+            QXmlStreamAttributes attr = xml.attributes();
+            QString username = attr.value("username").toString();
+            QString password = attr.value("password").toString();
+            //qDebug() << "user: " << " username = " << username << ", password = " << password;
+            m_users.insert(username, User(username, password));
+        }
+    }
+    if (xml.hasError()) {
+        qCritical("Server::loadUsers(): parse error in file users.xml => %s: line %li, column %li",
+                  qPrintable(xml.errorString()), (long)xml.lineNumber(), (long)xml.columnNumber());
+    }
+    file.close();
+
+#ifdef DEBUG
+    qDebug("Server::loadUsers(): %i users read from users.xml", m_users.count());
+#endif
+}
+
+void Server::saveUsers()
+{
+    QFile file("users.xml");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning("Server::saveUsers(): cannot write file users.xml => %s", qPrintable(file.errorString()));
+        return;
+    }
+    QXmlStreamWriter xml(&file);
+    xml.setAutoFormatting(true);
+    xml.writeStartDocument();
+    xml.writeStartElement("users");
+    foreach (const User &user, m_users) {
+        xml.writeStartElement("user");
+        xml.writeAttribute("username", user.getUsername());
+        xml.writeAttribute("password", user.getPassword());
+        xml.writeEndElement();
+    }
+    xml.writeEndElement();
+    xml.writeEndDocument();
+    file.close();
+
+#ifdef DEBUG
+    qDebug("Server::saveUsers(): %i users written to users.xml", 5);
+#endif
 }
 
 void Server::incomingConnection(int socketDescriptor)
