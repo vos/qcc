@@ -35,10 +35,10 @@ int main(int argc, char *argv[])
 
     Server server;
     if (server.listen(adress, port)) {
-        qDebug("The server is listening on interface %s and port %i.",
+        qDebug("The server is listening on interface %s, port %i",
                qPrintable(server.serverAddress().toString()), server.serverPort());
     } else {
-        qCritical("Failed to start the server on interface %s and port %i: %s (error code %i).",
+        qCritical("Failed to start the server on interface %s, port %i: %s (error code %i)",
                qPrintable(adress.toString()), port, qPrintable(server.errorString()), server.serverError());
         return 1;
     }

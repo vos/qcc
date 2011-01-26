@@ -5,7 +5,6 @@
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-#include <QStringList>
 #include <QDebug>
 
 Server::Server(QObject *parent) :
@@ -17,7 +16,7 @@ Server::Server(QObject *parent) :
 
 Server::~Server()
 {
-    saveUsers();
+    //saveUsers();
 }
 
 void Server::loadUsers()
@@ -33,11 +32,12 @@ void Server::loadUsers()
         if (!xml.readNextStartElement())
             continue;
         if (xml.name() == "user") {
-            QXmlStreamAttributes attr = xml.attributes();
-            QString username = attr.value("username").toString();
-            QString password = attr.value("password").toString();
-            //qDebug() << "user: " << " username = " << username << ", password = " << password;
-            m_users.insert(username, User(username, password));
+            User user = User::readUser(xml);
+            if (user.isValid()) {
+                m_users.insert(user.getUsername(), user);
+                qDebug() << "user: " << user.getUsername() << ", password = " << user.getPassword()
+                         << ", contacts = " << user.getContacts().count();
+            }
         }
     }
     if (xml.hasError()) {
@@ -62,12 +62,8 @@ void Server::saveUsers()
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
     xml.writeStartElement("users");
-    foreach (const User &user, m_users) {
-        xml.writeStartElement("user");
-        xml.writeAttribute("username", user.getUsername());
-        xml.writeAttribute("password", user.getPassword());
-        xml.writeEndElement();
-    }
+    foreach (User user, m_users)
+        user.writeUser(xml);
     xml.writeEndElement();
     xml.writeEndDocument();
     file.close();
@@ -137,10 +133,10 @@ void Server::client_readyRead()
     qint32 type;
     in >> type;
 
+    User *user = m_clients[client];
+
 #ifdef DEBUG
-    User *user_debug = m_clients[client];
-    QString username_debug = user_debug ? user_debug->getUsername() : "[no user object]";
-    qDebug("Server::client_readyRead: User = '%s', MessageType = %i", qPrintable(username_debug), type);
+    qDebug("Server::client_readyRead: User = '%s', MessageType = %i", qPrintable(user ? user->getUsername() : "[no user object]"), type);
 #endif
 
     switch ((Qcc::MessageType)type) {
@@ -151,18 +147,32 @@ void Server::client_readyRead()
 #ifdef DEBUG
         qDebug("Server::client_readyRead: username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
-        // TODO check authentication
-        m_clients[client] = new User(username, password);
-        out << (qint32)Qcc::AuthenticationSuccess;
-        //out << (qint32)AuthenticationFailure;
+        User *user = m_users.contains(username) ? &m_users[username] : NULL;
+        if (user && user->matchPassword(password)) {
+            m_clients[client] = user;
+            out << (qint32)Qcc::AuthenticationSuccess;
+#ifdef DEBUG
+            qDebug("AuthenticationSuccess");
+#endif
+        } else {
+            QString reason = "The username or password you entered is incorrect.";
+            out << (qint32)Qcc::AuthenticationFailure << reason;
+#ifdef DEBUG
+            qDebug("AuthenticationFailure: %s", qPrintable(reason));
+#endif
+        }
         break;
     }
     case Qcc::RequestContactList:
     {
         out << (qint32)Qcc::ContactList;
-        QStringList contacts;
-        contacts << "kai" << "till" << "ernst";
-        out << contacts;
+        QSet<QString> contacts = user->getContacts();
+        out << (qint32)contacts.count();
+        foreach (const QString &contactName, contacts) {
+            User contact = m_users.value(contactName);
+            if (contact.isValid())
+                out << contactName << (qint32)contact.getStatus();
+        }
         break;
     }
     case Qcc::Message:
@@ -197,6 +207,4 @@ void Server::client_disconnected()
 
     m_blockSizes.remove(client);
     m_clients.remove(client);
-    if (user)
-        delete user;
 }

@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QStringList>
 #include <QDebug>
 
 #include "qccnamespace.h"
@@ -87,12 +86,24 @@ void MainWindow::socket_readyRead()
         ui->stackedWidget->setCurrentIndex(1);
         break;
     case Qcc::AuthenticationFailure:
+    {
+        QString reason;
+        in >> reason;
+        m_socket.disconnectFromHost();
+        qDebug() << "AuthenticationFailure: " << reason;
         break;
+    }
     case Qcc::ContactList:
     {
-        QStringList contacts;
-        in >> contacts;
-        qDebug() << "contacts: " << contacts;
+        qint32 contactCount;
+        in >> contactCount;
+        for (int i = 0; i < contactCount; ++i) {
+            QString username;
+            qint32 status;
+            in >> username >> status;
+            QListWidgetItem *contactItem = new QListWidgetItem(style()->standardIcon(status ? QStyle::SP_ArrowUp : QStyle::SP_ArrowDown), username);
+            ui->contactListWidget->addItem(contactItem);
+        }
         break;
     }
     case Qcc::Message:

@@ -96,7 +96,30 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="mainPage"/>
+    <widget class="QWidget" name="mainPage">
+     <widget class="QListWidget" name="contactListWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>181</width>
+        <height>371</height>
+       </rect>
+      </property>
+      <property name="autoScroll">
+       <bool>false</bool>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="sortingEnabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
