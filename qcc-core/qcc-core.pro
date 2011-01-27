@@ -4,16 +4,16 @@
 #
 #-------------------------------------------------
 
-QT = core
+QT = core network
 
 TARGET = qcc-core
 TEMPLATE = lib
 CONFIG += staticlib create_prl
 
 
-HEADERS += qccnamespace.h
+HEADERS += qccpacket.h
 
-SOURCES +=
+SOURCES += qccpacket.cpp
 
 
 unix:!symbian {
