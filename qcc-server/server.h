@@ -20,16 +20,20 @@ public:
 signals:
 
 private slots:
-    void client_readyRead();
     void client_disconnected();
+    void client_readyRead();
 
 private:
+    struct Client {
+        Client(User *u = NULL) : packetSize(0), user(u) { }
+        quint32 packetSize;
+        User *user;
+    };
+
     QHash<QString, User> m_users;
-    QHash<QTcpSocket*, quint32> m_blockSizes;
-    QHash<QTcpSocket*, User*> m_clients;
+    QHash<QTcpSocket*, Client*> m_clients;
 
     void incomingConnection(int socketDescriptor);
-
 };
 
 #endif // SERVER_H

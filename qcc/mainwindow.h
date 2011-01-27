@@ -37,8 +37,7 @@ private:
 
     Ui::MainWindow *ui;
     QTcpSocket m_socket;
-    quint32 m_blockSize;
-
+    quint32 m_packetSize;
 };
 
 #endif // MAINWINDOW_H

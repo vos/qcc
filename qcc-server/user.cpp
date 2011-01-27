@@ -1,12 +1,14 @@
 #include "user.h"
 
+#include <QTcpSocket>
+
 User::User(QObject *parent) :
-    QObject(parent), m_status(Offline)
+    QObject(parent), m_status(Offline), m_socket(NULL)
 {
 }
 
 User::User(const QString &username, const QString &password, QObject *parent) :
-    QObject(parent), m_username(username), m_password(password), m_status(Offline)
+    QObject(parent), m_username(username), m_password(password), m_status(Offline), m_socket(NULL)
 {
 }
 
@@ -16,7 +18,7 @@ User::~User()
 
 User::User(const User &other) :
     m_username(other.m_username), m_password(other.m_password),
-    m_status(other.m_status), m_contacts(other.m_contacts)
+    m_status(other.m_status), m_contacts(other.m_contacts), m_socket(other.m_socket)
 {
 }
 
@@ -27,6 +29,7 @@ User& User::operator =(const User &other)
         m_password = other.m_password;
         m_status = other.m_status;
         m_contacts = other.m_contacts;
+        m_socket = other.m_socket;
     }
     return *this;
 }
@@ -92,4 +95,10 @@ void User::writeUser(QXmlStreamWriter &xml)
     }
     xml.writeEndElement();
     xml.writeEndElement();
+}
+
+void User::reset()
+{
+    setStatus(Offline);
+    m_socket = NULL;
 }

@@ -4,7 +4,7 @@
 #include <QCryptographicHash>
 #include <QDebug>
 
-#include "qccnamespace.h"
+#include "qccpacket.h"
 
 QCryptographicHash *MainWindow::HASH = new QCryptographicHash(QCryptographicHash::Sha1);
 
@@ -63,39 +63,38 @@ void MainWindow::socket_readyRead()
 
     QDataStream in(&m_socket);
     in.setVersion(QDataStream::Qt_4_0);
-    if (m_blockSize == 0) {
+    if (m_packetSize == 0) {
         if (m_socket.bytesAvailable() < (int)sizeof(quint32))
             return;
-        in >> m_blockSize;
+        in >> m_packetSize;
     }
-    if (m_socket.bytesAvailable() < m_blockSize)
+    if (m_socket.bytesAvailable() < m_packetSize)
         return;
-    m_blockSize = 0; // reset block size
-
-    QByteArray data;
-    QDataStream out(&data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_0);
-    out << (quint32)0;
+    m_packetSize = 0; // reset packet size
 
     qint32 type;
     in >> type;
 
 #ifdef DEBUG
-    qDebug("MainWindow::socket_readyRead: MessageType = %i", type);
+    qDebug("MainWindow::socket_readyRead: PacketType = %i", type);
 #endif
 
-    switch ((Qcc::MessageType)type) {
-    case Qcc::ConnectionAccepted:
-        out << (qint32)Qcc::UserAuthentication;
-        out << ui->usernameLineEdit->text() << MainWindow::hashString(ui->passwordLineEdit->text());
+    switch ((QccPacket::PacketType)type) {
+    case QccPacket::ConnectionAccepted:
+    {
+        QccPacket packet(QccPacket::UserAuthentication);
+        packet.stream() << ui->usernameLineEdit->text()
+                        << MainWindow::hashString(ui->passwordLineEdit->text());
+        packet.send(&m_socket);
         break;
-    case Qcc::ConnectionRefused:
+    }
+    case QccPacket::ConnectionRefused:
         break;
-    case Qcc::AuthenticationSuccess:
-        out << (qint32)Qcc::RequestContactList;
+    case QccPacket::AuthenticationSuccess:
+        QccPacket(QccPacket::RequestContactList).send(&m_socket);
         ui->stackedWidget->setCurrentIndex(1);
         break;
-    case Qcc::AuthenticationFailure:
+    case QccPacket::AuthenticationFailure:
     {
         QString reason;
         in >> reason;
@@ -103,7 +102,7 @@ void MainWindow::socket_readyRead()
         qDebug() << "AuthenticationFailure: " << reason;
         break;
     }
-    case Qcc::ContactList:
+    case QccPacket::ContactList:
     {
         qint32 contactCount;
         in >> contactCount;
@@ -116,21 +115,15 @@ void MainWindow::socket_readyRead()
         }
         break;
     }
-    case Qcc::Message:
+    case QccPacket::Message:
         break;
-    case Qcc::MessageSuccess:
+    case QccPacket::MessageSuccess:
         break;
-    case Qcc::MessageFailure:
+    case QccPacket::MessageFailure:
         break;
     default:
-        qWarning("MainWindow::socket_readyRead: Illegal MessageType %i", type);
+        qWarning("MainWindow::socket_readyRead: Illegal PacketType %i", type);
         return;
-    }
-
-    if (data.length() > (int)sizeof(quint32)) {
-        out.device()->seek(0);
-        out << (quint32)(data.size() - sizeof(quint32));
-        m_socket.write(data);
     }
 }
 
@@ -152,7 +145,7 @@ void MainWindow::socket_stateChanged(QAbstractSocket::SocketState state)
 
 void MainWindow::on_loginButton_clicked()
 {
-    m_blockSize = 0;
+    m_packetSize = 0;
     m_socket.connectToHost("127.0.0.1", 12345);
     ui->loginButton->setEnabled(false);
 }
