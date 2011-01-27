@@ -6,10 +6,10 @@ namespace Qcc
     enum MessageType {
         ConnectionAccepted,
         ConnectionRefused,
-        UserRegister,          // QString(username), QString(passwort|SHA-2), QString(name), QString(email)
+        UserRegister,          // QString(username), QString(passwort|SHA-1), QString(name), QString(email)
         RegisterSuccess,
         RegisterFailure,       // QString(reason)
-        UserAuthentication,    // QString(username), QString(passwort|SHA-2)
+        UserAuthentication,    // QString(username), QString(passwort|SHA-1)
         AuthenticationSuccess,
         AuthenticationFailure, // QString(reason)
         RequestAuthorization,  // QString(username)

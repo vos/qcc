@@ -4,6 +4,10 @@
 #include <QMainWindow>
 #include <QTcpSocket>
 
+QT_BEGIN_NAMESPACE
+class QCryptographicHash;
+QT_BEGIN_NAMESPACE
+
 namespace Ui {
     class MainWindow;
 }
@@ -28,6 +32,9 @@ private slots:
     void on_loginButton_clicked();
 
 private:
+    static QCryptographicHash *HASH;
+    static QString hashString(const QString &str);
+
     Ui::MainWindow *ui;
     QTcpSocket m_socket;
     quint32 m_blockSize;

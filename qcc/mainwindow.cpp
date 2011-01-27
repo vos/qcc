@@ -1,9 +1,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QCryptographicHash>
 #include <QDebug>
 
 #include "qccnamespace.h"
+
+QCryptographicHash *MainWindow::HASH = new QCryptographicHash(QCryptographicHash::Sha1);
+
+QString MainWindow::hashString(const QString &str)
+{
+    MainWindow::HASH->reset();
+    MainWindow::HASH->addData(str.toAscii());
+    return MainWindow::HASH->result().toHex();
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -77,7 +87,7 @@ void MainWindow::socket_readyRead()
     switch ((Qcc::MessageType)type) {
     case Qcc::ConnectionAccepted:
         out << (qint32)Qcc::UserAuthentication;
-        out << ui->usernameLineEdit->text() << ui->passwordLineEdit->text(); // TODO encode password
+        out << ui->usernameLineEdit->text() << MainWindow::hashString(ui->passwordLineEdit->text());
         break;
     case Qcc::ConnectionRefused:
         break;
