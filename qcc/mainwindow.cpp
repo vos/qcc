@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include <QCryptographicHash>
+#include <QMessageBox>
 #include <QDebug>
 
 #include "qccpacket.h"
@@ -89,7 +90,20 @@ void MainWindow::socket_readyRead()
         break;
     }
     case QccPacket::ConnectionRefused:
+        QMessageBox::critical(this, "Connection Refused", "Access denied!");
         break;
+    case QccPacket::RegisterSuccess:
+        QMessageBox::information(this, "Register Success", "You are now registered.");
+        ui->stackedWidget->setCurrentIndex(1);
+        break;
+    case QccPacket::RegisterFailure:
+    {
+        QString reason;
+        in >> reason;
+        m_socket.disconnectFromHost();
+        QMessageBox::warning(this, "Register Failure", reason);
+        break;
+    }
     case QccPacket::AuthenticationSuccess:
         QccPacket(QccPacket::RequestContactList).send(&m_socket);
         ui->stackedWidget->setCurrentIndex(1);
@@ -99,7 +113,27 @@ void MainWindow::socket_readyRead()
         QString reason;
         in >> reason;
         m_socket.disconnectFromHost();
-        qDebug() << "AuthenticationFailure: " << reason;
+        QMessageBox::warning(this, "Authentication Failure", reason);
+        break;
+    }
+    case QccPacket::AuthorizationAccepted:
+    {
+        QString username;
+        qint32 status;
+        in >> username >> status;
+        break;
+    }
+    case QccPacket::AuthorizationRejected:
+    {
+        QString username;
+        in >> username;
+        break;
+    }
+    case QccPacket::AuthorizationFailure:
+    {
+        QString reason;
+        in >> reason;
+        QMessageBox::warning(this, "Authorization Failure", reason);
         break;
     }
     case QccPacket::ContactList:
@@ -115,12 +149,62 @@ void MainWindow::socket_readyRead()
         }
         break;
     }
+    case QccPacket::ContactStatusChanged:
+    {
+        QString username;
+        qint32 status;
+        in >> username >> status;
+        qDebug() << "ContactStatusChanged: " << username << " => " << status;
+
+        for (int i = 0; i < ui->contactListWidget->count(); i++) {
+            QListWidgetItem *item = ui->contactListWidget->item(i);
+            if (item->text() == username)
+                item->setIcon(style()->standardIcon(status ? QStyle::SP_ArrowUp : QStyle::SP_ArrowDown));
+        }
+        break;
+    }
+    case QccPacket::ContactRemoved:
+    {
+        QString username;
+        in >> username;
+        for (int i = 0; i < ui->contactListWidget->count(); i++) {
+            QListWidgetItem *item = ui->contactListWidget->item(i);
+            if (item->text() == username) {
+                ui->contactListWidget->removeItemWidget(item);
+                break;
+            }
+        }
+        break;
+    }
     case QccPacket::Message:
+    {
+        qint32 id;
+        QString username, message;
+        in >> id >> username >> message;
+        QMessageBox::information(this, username + " says", message);
+
+        QccPacket packet(QccPacket::MessageSuccess);
+        packet.stream() << qint32(0) << username;
+        packet.send(&m_socket);
+
         break;
+    }
     case QccPacket::MessageSuccess:
+    {
+        qint32 id;
+        QString username;
+        in >> id >> username;
+        qDebug() << "MessageSuccess: " << id << " => " << username;
         break;
+    }
     case QccPacket::MessageFailure:
+    {
+        qint32 id;
+        QString username, reason;
+        in >> id >> username >> reason;
+        QMessageBox::warning(this, "Message Failure", reason);
         break;
+    }
     default:
         qWarning("MainWindow::socket_readyRead: Illegal PacketType %i", type);
         return;
@@ -148,4 +232,18 @@ void MainWindow::on_loginButton_clicked()
     m_packetSize = 0;
     m_socket.connectToHost("127.0.0.1", 12345);
     ui->loginButton->setEnabled(false);
+}
+
+void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
+{
+    QListWidgetItem *item = ui->contactListWidget->item(index.row());
+    QString username = item->text();
+
+    QccPacket message;
+    message.stream() << qint32(0) << username << QString("This is a simple test message!");
+    message.send(&m_socket);
+}
+
+void MainWindow::on_addContactButton_clicked()
+{
 }

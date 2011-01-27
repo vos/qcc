@@ -32,11 +32,12 @@ void Server::loadUsers()
         if (!xml.readNextStartElement())
             continue;
         if (xml.name() == "user") {
-            User user = User::readUser(xml);
-            if (user.isValid()) {
-                m_users.insert(user.getUsername(), user);
-                qDebug() << "user: " << user.getUsername() << ", password = " << user.getPassword()
-                         << ", contacts = " << user.getContacts().count();
+            User *user = User::readUser(xml);
+            if (user && user->isValid()) {
+                connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
+                m_users.insert(user->getUsername(), user);
+                qDebug() << "user: " << user->getUsername() << ", password = " << user->getPassword()
+                         << ", contacts = " << user->getContacts().count();
             }
         }
     }
@@ -62,8 +63,8 @@ void Server::saveUsers()
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
     xml.writeStartElement("users");
-    foreach (User user, m_users)
-        user.writeUser(xml);
+    foreach (User *user, m_users)
+        user->writeUser(xml);
     xml.writeEndElement();
     xml.writeEndDocument();
     file.close();
@@ -175,11 +176,12 @@ void Server::client_readyRead()
 #endif
             break;
         }
-        User u(username, password);
-        u.setStatus(User::Online);
-        u.setSocket(socket);
-        m_users.insert(username, u);
-        m_clients[socket]->user = &m_users[username];
+        User *user = new User(username, password);
+        user->setSocket(socket);
+        connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
+        user->setStatus(User::Online);
+        m_users.insert(username, user);
+        m_clients[socket]->user = m_users[username];
         QccPacket(QccPacket::RegisterSuccess).send(socket);
 #ifdef DEBUG
             qDebug("RegisterSuccess");
@@ -193,7 +195,7 @@ void Server::client_readyRead()
 #ifdef DEBUG
         qDebug("Server::client_readyRead: username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
-        User *user = m_users.contains(username) ? &m_users[username] : NULL;
+        User *user = m_users.contains(username) ? m_users[username] : NULL;
         if (user && user->matchPassword(password)) {
             user->setStatus(User::Online);
             user->setSocket(socket);
@@ -227,11 +229,11 @@ void Server::client_readyRead()
 #endif
             break;
         }
-        User receiver = m_users.value(username);
-        if (receiver.isOnline()) {
+        User *receiver = m_users.value(username);
+        if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::RequestAuthorization);
             packet.stream() << client->user->getUsername();
-            packet.send(receiver.getSocket());
+            packet.send(receiver->getSocket());
 #ifdef DEBUG
             qDebug("RequestAuthorization: forwarded to '%s'", qPrintable(username));
 #endif
@@ -252,11 +254,12 @@ void Server::client_readyRead()
         in >> username;
         if (username.isEmpty())
             break;
-        User receiver = m_users.value(username);
-        if (receiver.isOnline()) {
+        User *receiver = m_users.value(username);
+        if (receiver && receiver->isOnline()) {
+            receiver->addContact(client->user->getUsername());
             QccPacket packet(QccPacket::AuthorizationAccepted);
             packet.stream() << client->user->getUsername() << (qint32)client->user->getStatus();
-            packet.send(receiver.getSocket());
+            packet.send(receiver->getSocket());
         }
 #ifdef DEBUG
             qDebug("AuthorizationAccepted: forwarded to '%s'", qPrintable(username));
@@ -269,11 +272,11 @@ void Server::client_readyRead()
         in >> username;
         if (username.isEmpty())
             break;
-        User receiver = m_users.value(username);
-        if (receiver.isOnline()) {
+        User *receiver = m_users.value(username);
+        if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::AuthorizationRejected);
             packet.stream() << client->user->getUsername();
-            packet.send(receiver.getSocket());
+            packet.send(receiver->getSocket());
         }
 #ifdef DEBUG
             qDebug("AuthorizationRejected: forwarded to '%s'", qPrintable(username));
@@ -286,8 +289,8 @@ void Server::client_readyRead()
         QSet<QString> contacts = client->user->getContacts();
         packet.stream() << (qint32)contacts.count();
         foreach (const QString &contactName, contacts) {
-            User contact = m_users.value(contactName);
-            packet.stream() << contactName << (qint32)contact.getStatus();
+            User *contact = m_users.value(contactName);
+            packet.stream() << contactName << (qint32)contact->getStatus();
         }
         packet.send(socket);
 #ifdef DEBUG
@@ -315,21 +318,21 @@ void Server::client_readyRead()
         QString receiverName;
         QString message;
         in >> id >> receiverName >> message;
-        User receiver = m_users.value(receiverName);
-        if (receiver.isOnline()) {
+        User *receiver = m_users.value(receiverName);
+        if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::Message);
             packet.stream() << id << client->user->getUsername() << message;
-            packet.send(receiver.getSocket());
+            packet.send(receiver->getSocket());
 #ifdef DEBUG
             qDebug("Message: forwarded to '%s'", qPrintable(receiverName));
 #endif
         } else {
             QString reason = QString("The user \"%1\" is not online.").arg(receiverName);
             QccPacket packet(QccPacket::MessageFailure);
-            packet.stream() << reason;
-            packet.send(receiver.getSocket());
+            packet.stream() << id << receiverName << reason;
+            packet.send(socket);
 #ifdef DEBUG
-            qDebug("Message: failed to forwarded to '%s' => %s", qPrintable(receiverName), qPrintable(reason));
+            qDebug("Message: failed to forwarded message to '%s' => %s", qPrintable(receiverName), qPrintable(reason));
 #endif
         }
         break;
@@ -339,11 +342,11 @@ void Server::client_readyRead()
         qint32 id;
         QString receiverName;
         in >> id >> receiverName;
-        User receiver = m_users.value(receiverName);
-        if (receiver.isOnline()) {
+        User *receiver = m_users.value(receiverName);
+        if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::MessageSuccess);
             packet.stream() << id << client->user->getUsername();
-            packet.send(receiver.getSocket());
+            packet.send(receiver->getSocket());
 #ifdef DEBUG
             qDebug("MessageSuccess: message forwarded to '%s'", qPrintable(receiverName));
 #endif
@@ -353,4 +356,26 @@ void Server::client_readyRead()
         qWarning("Server::client_readyRead: Illegal PacketType %i", type);
         return;
     }
+}
+
+void Server::client_statusChanged()
+{
+    User *user = static_cast<User*>(sender());
+    if (!user) {
+        qWarning("Server::client_statusChanged: Cast of sender() to User* failed");
+        return;
+    }
+
+    // inform all online contacts of the status change
+    QccPacket packet(QccPacket::ContactStatusChanged);
+    packet.stream() << user->getUsername() << user->getStatus();
+    foreach (const QString &contactName, user->getContacts()) {
+        User *contact = m_users[contactName];
+        if (contact && contact->isValid() && contact->isOnline())
+            packet.send(contact->getSocket());
+    }
+
+#ifdef DEBUG
+    qDebug("Server::client_statusChanged: '%s' => %i", qPrintable(user->getUsername()), user->getStatus());
+#endif
 }

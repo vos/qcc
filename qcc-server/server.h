@@ -22,6 +22,7 @@ signals:
 private slots:
     void client_disconnected();
     void client_readyRead();
+    void client_statusChanged();
 
 private:
     struct Client {
@@ -30,7 +31,7 @@ private:
         User *user;
     };
 
-    QHash<QString, User> m_users;
+    QHash<QString, User*> m_users;
     QHash<QTcpSocket*, Client*> m_clients;
 
     void incomingConnection(int socketDescriptor);

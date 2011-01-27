@@ -54,20 +54,20 @@ bool User::matchPassword(const QString &password) const
     return m_password == password;
 }
 
-User User::readUser(QXmlStreamReader &xml)
+User* User::readUser(QXmlStreamReader &xml)
 {
     QXmlStreamAttributes attr = xml.attributes();
     QString username = attr.value("username").toString();
     QString password = attr.value("password").toString();
-    User user(username, password);
+    User *user = new User(username, password);
     while (!xml.atEnd()) {
         switch (xml.readNext()) {
         case QXmlStreamReader::Invalid:
-            return User();
+            return NULL;
         case QXmlStreamReader::StartElement:
             if (xml.name() == "contact") {
                 QString contact = xml.attributes().value("username").toString();
-                user.addContact(contact);
+                user->addContact(contact);
             }
             break;
         case QXmlStreamReader::EndElement:
@@ -79,7 +79,7 @@ User User::readUser(QXmlStreamReader &xml)
             break;
         }
     }
-    return User();
+    return NULL;
 }
 
 void User::writeUser(QXmlStreamWriter &xml)

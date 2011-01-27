@@ -38,7 +38,7 @@ public:
     bool matchPassword(const QString &password) const;
     bool isOnline() const { return m_status == Online; }
 
-    static User readUser(QXmlStreamReader &xml);
+    static User* readUser(QXmlStreamReader &xml);
     void writeUser(QXmlStreamWriter &xml);
 
 signals:

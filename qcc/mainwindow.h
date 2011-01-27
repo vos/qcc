@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QModelIndex>
 
 QT_BEGIN_NAMESPACE
 class QCryptographicHash;
@@ -30,6 +31,8 @@ private slots:
 #endif
 
     void on_loginButton_clicked();
+    void on_contactListWidget_activated(const QModelIndex &index);
+    void on_addContactButton_clicked();
 
 private:
     static QCryptographicHash *HASH;

@@ -25,7 +25,8 @@ public:
         AuthorizationRejected, // QString(username)
         AuthorizationFailure,  // QString(reason)
         RequestContactList,
-        ContactList,           // QString(username), qint32(status)
+        ContactList,           // QString(username), qint32(status), QString(username), qint32(status), ...
+        ContactStatusChanged,  // QString(username), qint32(status)
         RemoveContact,         // QString(username)
         ContactRemoved,        // QString(username)
         Message,               // qint32(message-id), QString(receiver|sender), QString(message)
