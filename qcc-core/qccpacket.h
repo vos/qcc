@@ -21,15 +21,15 @@ public:
         AuthenticationSuccess,
         AuthenticationFailure, // QString(reason)
         RequestAuthorization,  // QString(username)
-        AuthorizationAccepted, // QString(sender), QString(username), qint32(status)
-        AuthorizationRejected, // QString(sender), QString(username)
+        AuthorizationAccepted, // QString(username), qint32(status)
+        AuthorizationRejected, // QString(username)
         AuthorizationFailure,  // QString(reason)
         RequestContactList,
         ContactList,           // QString(username), qint32(status)
         RemoveContact,         // QString(username)
         ContactRemoved,        // QString(username)
-        Message,               // qint32(message-id), [QString(sender)|client], QString(receiver), QString(message)
-        MessageSuccess,        // qint32(message-id), [QString(sender)|client]
+        Message,               // qint32(message-id), QString(receiver|sender), QString(message)
+        MessageSuccess,        // qint32(message-id), QString(sender)
         MessageFailure,        // qint32(message-id), QString(receiver), QString(reason)
         IllegalMessage = -1
     };
