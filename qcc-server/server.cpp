@@ -31,7 +31,7 @@ void Server::loadUsers()
                 connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
                 m_users.insert(user->getUsername(), user);
 //                qDebug() << "user: " << user->getUsername() << ", password = " << user->getPassword()
-//                         << ", contacts = " << user->getContacts().count();
+//                         << ", contacts = " << user->getContacts();
             }
         }
     }
@@ -141,9 +141,10 @@ void Server::client_readyRead()
     in >> type;
 
 #ifdef DEBUG
-    qDebug("PacketType %i (%s) from '%s'", type,
+    qDebug("PacketType %i (%s) from '%s' (%s:%i)", type,
            qPrintable(QccPacket::typeString((QccPacket::PacketType)type)),
-           qPrintable(client->user ? client->user->getUsername() : "[no user object]"));
+           qPrintable(client->user ? client->user->getUsername() : "[no user object]"),
+           qPrintable(socket->peerAddress().toString()), socket->peerPort());
 #endif
 
     switch ((QccPacket::PacketType)type) {

@@ -12,10 +12,6 @@ User::User(const QString &username, const QString &password, QObject *parent) :
 {
 }
 
-User::~User()
-{
-}
-
 User::User(const User &other) :
     m_username(other.m_username), m_password(other.m_password),
     m_status(other.m_status), m_contacts(other.m_contacts), m_socket(other.m_socket)
@@ -66,8 +62,10 @@ User* User::readUser(QXmlStreamReader &xml)
             return NULL;
         case QXmlStreamReader::StartElement:
             if (xml.name() == "contact") {
-                QString contact = xml.attributes().value("username").toString();
-                user->addContact(contact);
+                if (xml.readNext() == QXmlStreamReader::Characters) {
+                    QString contactName = xml.text().toString();
+                    user->addContact(contactName);
+                }
             }
             break;
         case QXmlStreamReader::EndElement:
@@ -88,11 +86,8 @@ void User::writeUser(QXmlStreamWriter &xml)
     xml.writeAttribute("username", m_username);
     xml.writeAttribute("password", m_password);
     xml.writeStartElement("contacts");
-    foreach (const QString &contact, m_contacts) {
-        xml.writeStartElement("contact");
-        xml.writeAttribute("username", contact);
-        xml.writeEndElement();
-    }
+    foreach (const QString &contactName, m_contacts)
+        xml.writeTextElement("contact", contactName);
     xml.writeEndElement();
     xml.writeEndElement();
 }

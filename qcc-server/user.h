@@ -19,7 +19,6 @@ public:
 
     explicit User(QObject *parent = 0);
     User(const QString &username, const QString &password, QObject *parent = 0);
-    ~User();
     User(const User &other);
     User& operator =(const User &other);
 
