@@ -37,7 +37,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true">vos</string>
+       <string notr="true"/>
       </property>
      </widget>
      <widget class="QLineEdit" name="passwordLineEdit">
@@ -50,7 +50,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true">test</string>
+       <string notr="true"/>
       </property>
       <property name="echoMode">
        <enum>QLineEdit::Password</enum>
@@ -66,7 +66,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Login</string>
+       <string notr="true">Login</string>
       </property>
      </widget>
      <widget class="QLabel" name="usernameLabel">
@@ -105,7 +105,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>127.0.0.1</string>
+       <string notr="true">127.0.0.1</string>
       </property>
      </widget>
      <widget class="QLabel" name="serverLabel">
@@ -119,6 +119,19 @@
       </property>
       <property name="text">
        <string>Server</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="registerButton">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>210</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string notr="true">Register</string>
       </property>
      </widget>
     </widget>
@@ -148,7 +161,7 @@
      <widget class="QPushButton" name="addContactButton">
       <property name="geometry">
        <rect>
-        <x>70</x>
+        <x>120</x>
         <y>370</y>
         <width>75</width>
         <height>23</height>
@@ -156,6 +169,19 @@
       </property>
       <property name="text">
        <string>Add Contact</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="contactLineEdit">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>370</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string notr="true"/>
       </property>
      </widget>
     </widget>

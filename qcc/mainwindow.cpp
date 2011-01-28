@@ -16,11 +16,19 @@ QString MainWindow::hashString(const QString &str)
     return MainWindow::HASH->result().toHex();
 }
 
+QIcon MainWindow::offlineIcon;
+QIcon MainWindow::onlineIcon;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    if (MainWindow::offlineIcon.isNull()) {
+        MainWindow::offlineIcon = QIcon(":/icons/offline.png");
+        MainWindow::onlineIcon = QIcon(":/icons/online.png");
+    }
 
     connect(&m_socket, SIGNAL(connected()), SLOT(socket_connected()));
     connect(&m_socket, SIGNAL(disconnected()), SLOT(socket_disconnected()));
@@ -54,6 +62,7 @@ void MainWindow::socket_disconnected()
 
     ui->stackedWidget->setCurrentIndex(0);
     ui->loginButton->setEnabled(true);
+    ui->registerButton->setEnabled(true);
 }
 
 void MainWindow::socket_readyRead()
@@ -83,7 +92,7 @@ void MainWindow::socket_readyRead()
     switch ((QccPacket::PacketType)type) {
     case QccPacket::ConnectionAccepted:
     {
-        QccPacket packet(QccPacket::UserAuthentication);
+        QccPacket packet(m_register ? QccPacket::UserRegister : QccPacket::UserAuthentication);
         packet.stream() << ui->usernameLineEdit->text()
                         << MainWindow::hashString(ui->passwordLineEdit->text());
         packet.send(&m_socket);
@@ -132,12 +141,15 @@ void MainWindow::socket_readyRead()
         QString username;
         qint32 status;
         in >> username >> status;
+        QListWidgetItem *contactItem = new QListWidgetItem(status ? MainWindow::onlineIcon : MainWindow::offlineIcon, username);
+        ui->contactListWidget->addItem(contactItem);
         break;
     }
     case QccPacket::AuthorizationRejected:
     {
         QString username;
         in >> username;
+        QMessageBox::warning(this, "Authorization Rejected", username);
         break;
     }
     case QccPacket::AuthorizationFailure:
@@ -151,11 +163,12 @@ void MainWindow::socket_readyRead()
     {
         qint32 contactCount;
         in >> contactCount;
+        ui->contactListWidget->clear();
         for (int i = 0; i < contactCount; i++) {
             QString username;
             qint32 status;
             in >> username >> status;
-            QListWidgetItem *contactItem = new QListWidgetItem(style()->standardIcon(status ? QStyle::SP_ArrowUp : QStyle::SP_ArrowDown), username);
+            QListWidgetItem *contactItem = new QListWidgetItem(status ? MainWindow::onlineIcon : MainWindow::offlineIcon, username);
             ui->contactListWidget->addItem(contactItem);
         }
         break;
@@ -169,8 +182,10 @@ void MainWindow::socket_readyRead()
 
         for (int i = 0; i < ui->contactListWidget->count(); i++) {
             QListWidgetItem *item = ui->contactListWidget->item(i);
-            if (item->text() == username)
-                item->setIcon(style()->standardIcon(status ? QStyle::SP_ArrowUp : QStyle::SP_ArrowDown));
+            if (item->text() == username) {
+                item->setIcon(status ? MainWindow::onlineIcon : MainWindow::offlineIcon);
+                break;
+            }
         }
         break;
     }
@@ -229,6 +244,7 @@ void MainWindow::socket_error(QAbstractSocket::SocketError error)
 #endif
 
     ui->loginButton->setEnabled(true);
+    ui->registerButton->setEnabled(true);
 }
 
 #ifdef DEBUG
@@ -241,8 +257,19 @@ void MainWindow::socket_stateChanged(QAbstractSocket::SocketState state)
 void MainWindow::on_loginButton_clicked()
 {
     m_packetSize = 0;
+    m_register = false;
     m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
     ui->loginButton->setEnabled(false);
+    ui->registerButton->setEnabled(false);
+}
+
+void MainWindow::on_registerButton_clicked()
+{
+    m_packetSize = 0;
+    m_register = true;
+    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
+    ui->loginButton->setEnabled(false);
+    ui->registerButton->setEnabled(false);
 }
 
 void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
@@ -257,4 +284,7 @@ void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
 
 void MainWindow::on_addContactButton_clicked()
 {
+    QccPacket packet(QccPacket::RequestAuthorization);
+    packet.stream() << ui->contactLineEdit->text();
+    packet.send(&m_socket);
 }

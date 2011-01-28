@@ -31,16 +31,19 @@ private slots:
 #endif
 
     void on_loginButton_clicked();
+    void on_registerButton_clicked();
     void on_contactListWidget_activated(const QModelIndex &index);
     void on_addContactButton_clicked();
 
 private:
     static QCryptographicHash *HASH;
     static QString hashString(const QString &str);
+    static QIcon offlineIcon, onlineIcon;
 
     Ui::MainWindow *ui;
     QTcpSocket m_socket;
     quint32 m_packetSize;
+    bool m_register;
 };
 
 #endif // MAINWINDOW_H
