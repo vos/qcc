@@ -85,7 +85,7 @@ User* User::readUser(QXmlStreamReader &xml)
 void User::writeUser(QXmlStreamWriter &xml)
 {
     xml.writeStartElement("user");
-    xml.writeAttribute("username", m_password);
+    xml.writeAttribute("username", m_username);
     xml.writeAttribute("password", m_password);
     xml.writeStartElement("contacts");
     foreach (const QString &contact, m_contacts) {
