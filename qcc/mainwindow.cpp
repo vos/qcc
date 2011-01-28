@@ -39,14 +39,14 @@ MainWindow::~MainWindow()
 void MainWindow::socket_connected()
 {
 #ifdef DEBUG
-    qDebug("MainWindow::socket_connected");
+    qDebug("MainWindow::socket_connected()");
 #endif
 }
 
 void MainWindow::socket_disconnected()
 {
 #ifdef DEBUG
-    qDebug("MainWindow::socket_disconnected");
+    qDebug("MainWindow::socket_disconnected()");
 #endif
 
     if (isHidden()) // hack, true when window is closing
@@ -59,7 +59,7 @@ void MainWindow::socket_disconnected()
 void MainWindow::socket_readyRead()
 {
 #ifdef DEBUG
-    qDebug("MainWindow::socket_readyRead: %li bytes available", (long)m_socket.bytesAvailable());
+    qDebug("MainWindow::socket_readyRead(): %li bytes available", (long)m_socket.bytesAvailable());
 #endif
 
     QDataStream in(&m_socket);
@@ -77,7 +77,7 @@ void MainWindow::socket_readyRead()
     in >> type;
 
 #ifdef DEBUG
-    qDebug("MainWindow::socket_readyRead: PacketType = %i", type);
+    qDebug("PacketType = %i (%s)", type, qPrintable(QccPacket::typeString((QccPacket::PacketType)type)));
 #endif
 
     switch ((QccPacket::PacketType)type) {
@@ -114,6 +114,17 @@ void MainWindow::socket_readyRead()
         in >> reason;
         m_socket.disconnectFromHost();
         QMessageBox::warning(this, "Authentication Failure", reason);
+        break;
+    }
+    case QccPacket::RequestAuthorization:
+    {
+        QString username;
+        in >> username;
+
+        QccPacket packet(QccPacket::AuthorizationAccepted);
+        packet.stream() << username;
+        packet.send(&m_socket);
+
         break;
     }
     case QccPacket::AuthorizationAccepted:
@@ -184,7 +195,7 @@ void MainWindow::socket_readyRead()
         QMessageBox::information(this, username + " says", message);
 
         QccPacket packet(QccPacket::MessageSuccess);
-        packet.stream() << qint32(0) << username;
+        packet.stream() << id << username;
         packet.send(&m_socket);
 
         break;
@@ -206,7 +217,7 @@ void MainWindow::socket_readyRead()
         break;
     }
     default:
-        qWarning("MainWindow::socket_readyRead: Illegal PacketType %i", type);
+        qWarning("MainWindow::socket_readyRead(): Illegal PacketType %i", type);
         return;
     }
 }
@@ -230,7 +241,7 @@ void MainWindow::socket_stateChanged(QAbstractSocket::SocketState state)
 void MainWindow::on_loginButton_clicked()
 {
     m_packetSize = 0;
-    m_socket.connectToHost("127.0.0.1", 12345);
+    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
     ui->loginButton->setEnabled(false);
 }
 

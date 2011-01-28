@@ -13,10 +13,6 @@ Server::Server(QObject *parent) :
     loadUsers();
 }
 
-Server::~Server()
-{
-}
-
 void Server::loadUsers()
 {
     QFile file("users.xml");
@@ -79,7 +75,8 @@ void Server::incomingConnection(int socketDescriptor)
     addPendingConnection(socket);
 
 #ifdef DEBUG
-    qDebug("Server::incomingConnection(%i): %s:%i", socketDescriptor, qPrintable(socket->peerAddress().toString()), socket->peerPort());
+    qDebug("\nServer::incomingConnection(%i): %s:%i", socketDescriptor,
+           qPrintable(socket->peerAddress().toString()), socket->peerPort());
 #endif
 
     connect(socket, SIGNAL(disconnected()), SLOT(client_disconnected()));
@@ -89,7 +86,7 @@ void Server::incomingConnection(int socketDescriptor)
     QccPacket(QccPacket::ConnectionAccepted).send(socket); // QccPacket::ConnectionRefused
 
 #ifdef DEBUG
-    qDebug("Connection accepted");
+    qDebug("ConnectionAccepted");
 #endif
 }
 
@@ -97,7 +94,7 @@ void Server::client_disconnected()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     if (!socket) {
-        qWarning("Server::client_disconnected: Cast of sender() to QTcpSocket* failed");
+        qWarning("Server::client_disconnected(): Cast of sender() to QTcpSocket* failed");
         return;
     }
 
@@ -108,7 +105,8 @@ void Server::client_disconnected()
 
 #ifdef DEBUG
     QString username = user ? user->getUsername() : "[no user object]";
-    qDebug("client disconnected: '%s' (%s:%i)", qPrintable(username), qPrintable(socket->peerAddress().toString()), socket->peerPort());
+    qDebug("\nServer::client_disconnected(): '%s' (%s:%i)", qPrintable(username),
+           qPrintable(socket->peerAddress().toString()), socket->peerPort());
 #endif
 
     m_clients.remove(socket);
@@ -119,12 +117,12 @@ void Server::client_readyRead()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     if (!socket) {
-        qWarning("Server::client_readyRead: Cast of sender() to QTcpSocket* failed");
+        qWarning("Server::client_readyRead(): Cast of sender() to QTcpSocket* failed");
         return;
     }
 
 #ifdef DEBUG
-    qDebug("Server::client_readyRead: %li bytes available", (long)socket->bytesAvailable());
+    qDebug("\nServer::client_readyRead(): %li bytes available", (long)socket->bytesAvailable());
 #endif
 
     Client *client = m_clients[socket];
@@ -143,7 +141,9 @@ void Server::client_readyRead()
     in >> type;
 
 #ifdef DEBUG
-    qDebug("Server::client_readyRead: User = '%s', PacketType = %i", qPrintable(client->user ? client->user->getUsername() : "[no user object]"), type);
+    qDebug("PacketType %i (%s) from '%s'", type,
+           qPrintable(QccPacket::typeString((QccPacket::PacketType)type)),
+           qPrintable(client->user ? client->user->getUsername() : "[no user object]"));
 #endif
 
     switch ((QccPacket::PacketType)type) {
@@ -152,7 +152,7 @@ void Server::client_readyRead()
         QString username, password;
         in >> username >> password;
 #ifdef DEBUG
-        qDebug("Server::client_readyRead: username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
+        qDebug("Username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
         if (username.isEmpty()) {
             QString reason = "The username cannot be empty.";
@@ -174,6 +174,9 @@ void Server::client_readyRead()
 #endif
             break;
         }
+#ifdef DEBUG
+            qDebug("RegisterSuccess");
+#endif
         User *user = new User(username, password);
         user->setSocket(socket);
         connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
@@ -182,9 +185,6 @@ void Server::client_readyRead()
         saveUsers();
         client->user = user;
         QccPacket(QccPacket::RegisterSuccess).send(socket);
-#ifdef DEBUG
-            qDebug("RegisterSuccess");
-#endif
         break;
     }
     case QccPacket::UserAuthentication:
@@ -192,17 +192,17 @@ void Server::client_readyRead()
         QString username, password;
         in >> username >> password;
 #ifdef DEBUG
-        qDebug("Server::client_readyRead: username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
+        qDebug("Username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
         User *user = m_users.contains(username) ? m_users[username] : NULL;
         if (user && user->matchPassword(password)) {
+#ifdef DEBUG
+            qDebug("AuthenticationSuccess");
+#endif
             user->setStatus(User::Online);
             user->setSocket(socket);
             client->user = user;
             QccPacket(QccPacket::AuthenticationSuccess).send(socket);
-#ifdef DEBUG
-            qDebug("AuthenticationSuccess");
-#endif
         } else {
             QString reason = "The username or password you entered is incorrect.";
             QccPacket packet(QccPacket::AuthenticationFailure);
@@ -290,12 +290,11 @@ void Server::client_readyRead()
         packet.stream() << (qint32)contacts.count();
         foreach (const QString &contactName, contacts) {
             User *contact = m_users.value(contactName);
-            if (contact)
-                packet.stream() << contactName << (qint32)contact->getStatus();
+            packet.stream() << contactName << qint32(contact ? contact->getStatus() : User::Offline);
         }
         packet.send(socket);
 #ifdef DEBUG
-            qDebug("RequestContactList: %i contacts send", contacts.count());
+            qDebug("ContactList: %i contacts send", contacts.count());
 #endif
         break;
     }
@@ -309,7 +308,7 @@ void Server::client_readyRead()
             packet.stream() << username;
             packet.send(socket);
 #ifdef DEBUG
-            qDebug("RemoveContact: contact '%s' removed", qPrintable(username));
+            qDebug("ContactRemoved: contact '%s' removed", qPrintable(username));
 #endif
         }
         break;
@@ -334,7 +333,8 @@ void Server::client_readyRead()
             packet.stream() << id << receiverName << reason;
             packet.send(socket);
 #ifdef DEBUG
-            qDebug("Message: failed to forwarded message to '%s' => %s", qPrintable(receiverName), qPrintable(reason));
+            qDebug("MessageFailure: failed to forward to '%s' => %s",
+                   qPrintable(receiverName), qPrintable(reason));
 #endif
         }
         break;
@@ -350,34 +350,39 @@ void Server::client_readyRead()
             packet.stream() << id << client->user->getUsername();
             packet.send(receiver->getSocket());
 #ifdef DEBUG
-            qDebug("MessageSuccess: message forwarded to '%s'", qPrintable(receiverName));
+            qDebug("MessageSuccess: forwarded to '%s'", qPrintable(receiverName));
 #endif
         }
+        break;
     }
     default:
-        qWarning("Server::client_readyRead: Illegal PacketType %i", type);
+        qWarning("Server::client_readyRead(): Illegal PacketType %i", type);
         return;
     }
 }
 
 void Server::client_statusChanged()
 {
-    User *user = static_cast<User*>(sender());
+    User *user = qobject_cast<User*>(sender());
     if (!user) {
-        qWarning("Server::client_statusChanged: Cast of sender() to User* failed");
+        qWarning("Server::client_statusChanged(): Cast of sender() to User* failed");
         return;
     }
+
+#ifdef DEBUG
+    qDebug("\nServer::client_statusChanged(): '%s' => %i", qPrintable(user->getUsername()), user->getStatus());
+#endif
 
     // inform all online contacts of the status change
     QccPacket packet(QccPacket::ContactStatusChanged);
     packet.stream() << user->getUsername() << user->getStatus();
     foreach (const QString &contactName, user->getContacts()) {
         User *contact = m_users[contactName];
-        if (contact && contact->isValid() && contact->isOnline())
+        if (contact && contact->isOnline()) {
             packet.send(contact->getSocket());
-    }
-
 #ifdef DEBUG
-    qDebug("Server::client_statusChanged: '%s' => %i", qPrintable(user->getUsername()), user->getStatus());
+    qDebug("ContactStatusChanged: send to contact '%s'", qPrintable(contact->getUsername()));
 #endif
+        }
+    }
 }
