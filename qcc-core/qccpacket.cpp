@@ -2,6 +2,35 @@
 
 #include <QTcpSocket>
 
+const char* QccPacket::PacketTypeNames[] = {
+    "ConnectionAccepted",
+    "ConnectionRefused",
+    "UserRegister",
+    "RegisterSuccess",
+    "RegisterFailure",
+    "UserAuthentication",
+    "AuthenticationSuccess",
+    "AuthenticationFailure",
+    "RequestAuthorization",
+    "AuthorizationAccepted",
+    "AuthorizationRejected",
+    "AuthorizationFailure",
+    "RequestContactList",
+    "ContactList",
+    "ContactStatusChanged",
+    "RemoveContact",
+    "ContactRemoved",
+    "Message",
+    "MessageSuccess",
+    "MessageFailure",
+    "IllegalMessage"
+};
+
+QString QccPacket::typeString(QccPacket::PacketType type)
+{
+    return QccPacket::PacketTypeNames[type];
+}
+
 QccPacket::QccPacket(PacketType type) :
     m_type(type), m_stream(&m_data, QIODevice::WriteOnly)
 {
