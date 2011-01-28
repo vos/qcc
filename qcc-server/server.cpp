@@ -11,12 +11,10 @@ Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
     loadUsers();
-    //saveUsers();
 }
 
 Server::~Server()
 {
-    //saveUsers();
 }
 
 void Server::loadUsers()
@@ -36,8 +34,8 @@ void Server::loadUsers()
             if (user && user->isValid()) {
                 connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
                 m_users.insert(user->getUsername(), user);
-                qDebug() << "user: " << user->getUsername() << ", password = " << user->getPassword()
-                         << ", contacts = " << user->getContacts().count();
+//                qDebug() << "user: " << user->getUsername() << ", password = " << user->getPassword()
+//                         << ", contacts = " << user->getContacts().count();
             }
         }
     }
@@ -84,8 +82,8 @@ void Server::incomingConnection(int socketDescriptor)
     qDebug("Server::incomingConnection(%i): %s:%i", socketDescriptor, qPrintable(socket->peerAddress().toString()), socket->peerPort());
 #endif
 
-    connect(socket, SIGNAL(readyRead()), SLOT(client_readyRead()));
     connect(socket, SIGNAL(disconnected()), SLOT(client_disconnected()));
+    connect(socket, SIGNAL(readyRead()), SLOT(client_readyRead()));
 
     m_clients.insert(socket, new Client);
     QccPacket(QccPacket::ConnectionAccepted).send(socket); // QccPacket::ConnectionRefused
@@ -181,7 +179,8 @@ void Server::client_readyRead()
         connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
         user->setStatus(User::Online);
         m_users.insert(username, user);
-        m_clients[socket]->user = m_users[username];
+        saveUsers();
+        client->user = user;
         QccPacket(QccPacket::RegisterSuccess).send(socket);
 #ifdef DEBUG
             qDebug("RegisterSuccess");
@@ -199,7 +198,7 @@ void Server::client_readyRead()
         if (user && user->matchPassword(password)) {
             user->setStatus(User::Online);
             user->setSocket(socket);
-            m_clients[socket]->user = user;
+            client->user = user;
             QccPacket(QccPacket::AuthenticationSuccess).send(socket);
 #ifdef DEBUG
             qDebug("AuthenticationSuccess");
@@ -257,6 +256,7 @@ void Server::client_readyRead()
         User *receiver = m_users.value(username);
         if (receiver && receiver->isOnline()) {
             receiver->addContact(client->user->getUsername());
+            saveUsers();
             QccPacket packet(QccPacket::AuthorizationAccepted);
             packet.stream() << client->user->getUsername() << (qint32)client->user->getStatus();
             packet.send(receiver->getSocket());
@@ -290,7 +290,8 @@ void Server::client_readyRead()
         packet.stream() << (qint32)contacts.count();
         foreach (const QString &contactName, contacts) {
             User *contact = m_users.value(contactName);
-            packet.stream() << contactName << (qint32)contact->getStatus();
+            if (contact)
+                packet.stream() << contactName << (qint32)contact->getStatus();
         }
         packet.send(socket);
 #ifdef DEBUG
@@ -303,6 +304,7 @@ void Server::client_readyRead()
         QString username;
         in >> username;
         if (client->user->removeContact(username)) {
+            saveUsers();
             QccPacket packet(QccPacket::ContactRemoved);
             packet.stream() << username;
             packet.send(socket);
