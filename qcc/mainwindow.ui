@@ -37,7 +37,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true"/>
+       <string notr="true">vos</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="passwordLineEdit">
@@ -50,7 +50,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true"/>
+       <string notr="true">test</string>
       </property>
       <property name="echoMode">
        <enum>QLineEdit::Password</enum>
@@ -66,7 +66,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true">Login</string>
+       <string>Login</string>
       </property>
      </widget>
      <widget class="QLabel" name="usernameLabel">
@@ -131,7 +131,7 @@
        </rect>
       </property>
       <property name="text">
-       <string notr="true">Register</string>
+       <string>Register</string>
       </property>
      </widget>
     </widget>

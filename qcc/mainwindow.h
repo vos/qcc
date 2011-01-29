@@ -9,6 +9,8 @@ QT_BEGIN_NAMESPACE
 class QCryptographicHash;
 QT_BEGIN_NAMESPACE
 
+class MessageWindow;
+
 namespace Ui {
     class MainWindow;
 }
@@ -44,6 +46,9 @@ private:
     QTcpSocket m_socket;
     quint32 m_packetSize;
     bool m_register;
+    MessageWindow *m_messageWindow;
+
+    void closeEvent(QCloseEvent *);
 };
 
 #endif // MAINWINDOW_H

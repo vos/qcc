@@ -23,10 +23,16 @@ LIBS += -L$$LIBQCCPATH -lqcc-core
 
 
 SOURCES += main.cpp \
-           mainwindow.cpp
+           mainwindow.cpp \
+           messagewindow.cpp \
+           messagepage.cpp
 
-HEADERS += mainwindow.h
+HEADERS += mainwindow.h \
+           messagewindow.h \
+           messagepage.h
 
-FORMS += mainwindow.ui
+FORMS += mainwindow.ui \
+         messagewindow.ui \
+         messagepage.ui
 
 RESOURCES += icons.qrc

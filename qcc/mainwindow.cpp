@@ -6,6 +6,7 @@
 #include <QDebug>
 
 #include "qccpacket.h"
+#include "messagewindow.h"
 
 QCryptographicHash *MainWindow::HASH = new QCryptographicHash(QCryptographicHash::Sha1);
 
@@ -20,8 +21,7 @@ QIcon MainWindow::offlineIcon;
 QIcon MainWindow::onlineIcon;
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    QMainWindow(parent), ui(new Ui::MainWindow), m_packetSize(0), m_messageWindow(new MessageWindow(&m_socket))
 {
     ui->setupUi(this);
 
@@ -41,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_messageWindow;
     delete ui;
 }
 
@@ -187,6 +188,7 @@ void MainWindow::socket_readyRead()
                 break;
             }
         }
+        // TODO update open chat window
         break;
     }
     case QccPacket::ContactRemoved:
@@ -200,6 +202,7 @@ void MainWindow::socket_readyRead()
                 break;
             }
         }
+        // TODO update open chat window
         break;
     }
     case QccPacket::Message:
@@ -207,7 +210,10 @@ void MainWindow::socket_readyRead()
         qint32 id;
         QString username, message;
         in >> id >> username >> message;
-        QMessageBox::information(this, username + " says", message);
+
+        m_messageWindow->addTab(username, MainWindow::onlineIcon);
+        m_messageWindow->appendMessage(username, message);
+        m_messageWindow->show();
 
         QccPacket packet(QccPacket::MessageSuccess);
         packet.stream() << id << username;
@@ -275,11 +281,9 @@ void MainWindow::on_registerButton_clicked()
 void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
 {
     QListWidgetItem *item = ui->contactListWidget->item(index.row());
-    QString username = item->text();
-
-    QccPacket message;
-    message.stream() << qint32(0) << username << QString("This is a simple test message!");
-    message.send(&m_socket);
+    if (!item) return;
+    m_messageWindow->addTab(item->text(), item->icon());
+    m_messageWindow->show();
 }
 
 void MainWindow::on_addContactButton_clicked()
@@ -287,4 +291,10 @@ void MainWindow::on_addContactButton_clicked()
     QccPacket packet(QccPacket::RequestAuthorization);
     packet.stream() << ui->contactLineEdit->text();
     packet.send(&m_socket);
+    ui->contactLineEdit->clear();
+}
+
+void MainWindow::closeEvent(QCloseEvent *)
+{
+    qApp->quit();
 }
