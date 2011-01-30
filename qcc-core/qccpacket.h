@@ -38,12 +38,12 @@ public:
     static QString typeString(PacketType type);
 
     QccPacket(PacketType type = Message);
-    PacketType type() const { return m_type; }
-    QString typeString() const { return QccPacket::PacketTypeNames[m_type]; }
-    QByteArray& data() { return m_data; }
-    QDataStream& stream() { return m_stream; }
+    inline PacketType type() const { return m_type; }
+    inline QString typeString() const { return QccPacket::PacketTypeNames[m_type]; }
+    inline QByteArray& data() { return m_data; }
+    inline QDataStream& stream() { return m_stream; }
+    inline int size() const { return m_data.size() - sizeof(quint32); }
     bool send(QTcpSocket *socket);
-    int size() const { return m_data.size() - sizeof(quint32); }
 
 private:
     static const char *PacketTypeNames[];

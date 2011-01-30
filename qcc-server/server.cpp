@@ -5,12 +5,21 @@
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+
+#ifdef DEBUG
 #include <QDebug>
+#endif
 
 Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
     loadUsers();
+}
+
+Server::~Server()
+{
+    qDeleteAll(m_users.values());
+    qDeleteAll(m_clients.values());
 }
 
 void Server::loadUsers()
@@ -30,8 +39,9 @@ void Server::loadUsers()
             if (user && user->isValid()) {
                 connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
                 m_users.insert(user->getUsername(), user);
-//                qDebug() << "user: " << user->getUsername() << ", password = " << user->getPassword()
-//                         << ", contacts = " << user->getContacts();
+#ifdef DEBUG
+                qDebug() << "user:" << user->getUsername() << "contacts =" << user->getContacts();
+#endif
             }
         }
     }
@@ -129,7 +139,7 @@ void Server::client_readyRead()
     QDataStream in(socket);
     in.setVersion(QDataStream::Qt_4_0);
     if (client->packetSize == 0) {
-        if (socket->bytesAvailable() < (int)sizeof(quint32))
+        if (socket->bytesAvailable() < (int)sizeof(quint32)) // packet size
             return;
         in >> client->packetSize;
     }
@@ -220,7 +230,17 @@ void Server::client_readyRead()
         QString username;
         in >> username;
         if (!m_users.contains(username)) {
-            QString reason = QString("The username \"%1\" does not exist.").arg(username);
+            QString reason = QString("The user \"%1\" does not exist.").arg(username);
+            QccPacket packet(QccPacket::AuthorizationFailure);
+            packet.stream() << reason;
+            packet.send(socket);
+#ifdef DEBUG
+            qDebug("AuthorizationFailure: %s", qPrintable(reason));
+#endif
+            break;
+        }
+        if (client->user->containsContact(username)) {
+            QString reason = QString("The user \"%1\" is already on your contact list.").arg(username);
             QccPacket packet(QccPacket::AuthorizationFailure);
             packet.stream() << reason;
             packet.send(socket);
@@ -320,6 +340,16 @@ void Server::client_readyRead()
         QString receiverName;
         QString message;
         in >> id >> receiverName >> message;
+        if (!client->user->containsContact(receiverName)) {
+            QString reason = QString("The user \"%1\" is not on your contact list.").arg(receiverName);
+            QccPacket packet(QccPacket::MessageFailure);
+            packet.stream() << reason;
+            packet.send(socket);
+#ifdef DEBUG
+            qDebug("MessageFailure: %s", qPrintable(reason));
+#endif
+            break;
+        }
         User *receiver = m_users.value(receiverName);
         if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::Message);
@@ -374,15 +404,16 @@ void Server::client_statusChanged()
     qDebug("\nServer::client_statusChanged(): '%s' => %i", qPrintable(user->getUsername()), user->getStatus());
 #endif
 
-    // inform all online contacts of the status change
+    // inform all online users that have this user on their contact list of the status change
     QccPacket packet(QccPacket::ContactStatusChanged);
     packet.stream() << user->getUsername() << user->getStatus();
-    foreach (const QString &contactName, user->getContacts()) {
-        User *contact = m_users[contactName];
-        if (contact && contact->isOnline()) {
-            packet.send(contact->getSocket());
+    foreach (Client *client, m_clients.values()) {
+        if (client->user == NULL)
+            continue;
+        if (client->user->containsContact(user->getUsername())) {
+            packet.send(client->user->getSocket());
 #ifdef DEBUG
-    qDebug("ContactStatusChanged: send to contact '%s'", qPrintable(contact->getUsername()));
+    qDebug("ContactStatusChanged(): send to contact '%s'", qPrintable(client->user->getUsername()));
 #endif
         }
     }

@@ -30,26 +30,6 @@ User& User::operator =(const User &other)
     return *this;
 }
 
-void User::addContact(const QString &username)
-{
-    m_contacts.insert(username);
-}
-
-bool User::removeContact(const QString &username)
-{
-    return m_contacts.remove(username);
-}
-
-void User::clearContacts()
-{
-    m_contacts.clear();
-}
-
-bool User::matchPassword(const QString &password) const
-{
-    return m_password == password;
-}
-
 User* User::readUser(QXmlStreamReader &xml)
 {
     QXmlStreamAttributes attr = xml.attributes();

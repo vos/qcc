@@ -12,6 +12,7 @@ class Server : public QTcpServer
 
 public:
     explicit Server(QObject *parent = 0);
+    ~Server();
 
     void loadUsers();
     void saveUsers();

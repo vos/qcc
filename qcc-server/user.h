@@ -22,20 +22,21 @@ public:
     User(const User &other);
     User& operator =(const User &other);
 
-    const QString& getUsername() const { return m_username; }
-    const QString& getPassword() const { return m_password; }
-    Status getStatus() const { return m_status; }
-    const QSet<QString>& getContacts() const { return m_contacts; }
-    QTcpSocket* getSocket() const { return m_socket; }
+    inline const QString& getUsername() const { return m_username; }
+    inline const QString& getPassword() const { return m_password; }
+    inline Status getStatus() const { return m_status; }
+    inline const QSet<QString>& getContacts() const { return m_contacts; }
+    inline QTcpSocket* getSocket() const { return m_socket; }
 
-    void addContact(const QString &username);
-    bool removeContact(const QString &username);
-    void clearContacts();
+    inline void addContact(const QString &username) { m_contacts.insert(username); }
+    inline bool containsContact(const QString &username) const { return m_contacts.contains(username); }
+    inline bool removeContact(const QString &username) { return m_contacts.remove(username); }
+    inline void clearContacts() { m_contacts.clear(); }
 
-    bool isValid() const { return !m_username.isEmpty(); }
-    void invalidate() { m_username.clear(); }
-    bool matchPassword(const QString &password) const;
-    bool isOnline() const { return m_status == Online; }
+    inline bool isValid() const { return !m_username.isEmpty(); }
+    inline void invalidate() { m_username.clear(); }
+    inline bool matchPassword(const QString &password) const { return m_password == password; };
+    inline bool isOnline() const { return m_status == Online; }
 
     static User* readUser(QXmlStreamReader &xml);
     void writeUser(QXmlStreamWriter &xml);

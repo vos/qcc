@@ -1,6 +1,9 @@
 #include <QtCore/QCoreApplication>
 #include <QStringList>
+
+#ifdef DEBUG
 #include <QDebug>
+#endif
 
 #include "server.h"
 
