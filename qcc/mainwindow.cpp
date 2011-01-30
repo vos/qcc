@@ -21,7 +21,7 @@ QIcon MainWindow::offlineIcon;
 QIcon MainWindow::onlineIcon;
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow), m_packetSize(0), m_messageWindow(new MessageWindow(&m_socket))
+    QMainWindow(parent), ui(new Ui::MainWindow), m_messageWindow(new MessageWindow(&m_socket)), m_packetSize(0)
 {
     ui->setupUi(this);
 
@@ -43,6 +43,17 @@ MainWindow::~MainWindow()
 {
     delete m_messageWindow;
     delete ui;
+}
+
+void MainWindow::connectToHost()
+{
+    if (m_socket.state() > 0)
+        return;
+
+    m_packetSize = 0;
+    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
+    ui->loginButton->setEnabled(false);
+    ui->registerButton->setEnabled(false);
 }
 
 void MainWindow::socket_connected()
@@ -75,7 +86,7 @@ void MainWindow::socket_readyRead()
     QDataStream in(&m_socket);
     in.setVersion(QDataStream::Qt_4_0);
     if (m_packetSize == 0) {
-        if (m_socket.bytesAvailable() < (int)sizeof(quint32))
+        if (m_socket.bytesAvailable() < (int)sizeof(quint32)) // packet size
             return;
         in >> m_packetSize;
     }
@@ -181,14 +192,15 @@ void MainWindow::socket_readyRead()
         in >> username >> status;
         qDebug() << "ContactStatusChanged: " << username << " => " << status;
 
+        QIcon icon = status ? MainWindow::onlineIcon : MainWindow::offlineIcon;
         for (int i = 0; i < ui->contactListWidget->count(); i++) {
             QListWidgetItem *item = ui->contactListWidget->item(i);
             if (item->text() == username) {
-                item->setIcon(status ? MainWindow::onlineIcon : MainWindow::offlineIcon);
+                item->setIcon(icon);
                 break;
             }
         }
-        // TODO update open chat window
+        m_messageWindow->updateStatus(username, status, icon);
         break;
     }
     case QccPacket::ContactRemoved:
@@ -214,6 +226,8 @@ void MainWindow::socket_readyRead()
         m_messageWindow->addTab(username, MainWindow::onlineIcon);
         m_messageWindow->appendMessage(username, message);
         m_messageWindow->show();
+        m_messageWindow->activateWindow();
+        m_messageWindow->raise();
 
         QccPacket packet(QccPacket::MessageSuccess);
         packet.stream() << id << username;
@@ -262,20 +276,14 @@ void MainWindow::socket_stateChanged(QAbstractSocket::SocketState state)
 
 void MainWindow::on_loginButton_clicked()
 {
-    m_packetSize = 0;
     m_register = false;
-    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
-    ui->loginButton->setEnabled(false);
-    ui->registerButton->setEnabled(false);
+    connectToHost();
 }
 
 void MainWindow::on_registerButton_clicked()
 {
-    m_packetSize = 0;
     m_register = true;
-    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
-    ui->loginButton->setEnabled(false);
-    ui->registerButton->setEnabled(false);
+    connectToHost();
 }
 
 void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
@@ -284,13 +292,20 @@ void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
     if (!item) return;
     m_messageWindow->addTab(item->text(), item->icon());
     m_messageWindow->show();
+    m_messageWindow->activateWindow();
+    m_messageWindow->raise();
 }
 
 void MainWindow::on_addContactButton_clicked()
 {
+    QString username = ui->contactLineEdit->text();
+    if (username.isEmpty())
+        return;
+
     QccPacket packet(QccPacket::RequestAuthorization);
-    packet.stream() << ui->contactLineEdit->text();
+    packet.stream() << username;
     packet.send(&m_socket);
+
     ui->contactLineEdit->clear();
 }
 

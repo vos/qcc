@@ -13,6 +13,7 @@ MessageWindow::MessageWindow(QTcpSocket *socket, QWidget *parent) :
 
 MessageWindow::~MessageWindow()
 {
+    qDeleteAll(m_pages.values());
     delete ui;
 }
 
@@ -23,7 +24,7 @@ bool MessageWindow::addTab(const QString &username, const QIcon &icon)
         return false;
     }
 
-    MessagePage *page = new MessagePage(m_socket, username, icon);
+    MessagePage *page = new MessagePage(m_socket, username);
     connect(page, SIGNAL(closeButtonClicked()), SLOT(page_closeButtonClicked()));
     int index = QTabWidget::addTab(page, icon, username);
     m_pages.insert(username, page);
@@ -36,6 +37,18 @@ void MessageWindow::appendMessage(const QString &username, const QString &messag
     if (!m_pages.contains(username))
         return;
     m_pages.value(username)->appendMessage(username, message, Qt::red);
+}
+
+void MessageWindow::updateStatus(const QString &username, int status, const QIcon &icon)
+{
+    if (!m_pages.contains(username))
+        return;
+    // find tab and update the icon
+    for (int i = 0; i < count(); i++) {
+        if (tabText(i) == username)
+            setTabIcon(i, icon);
+    }
+    m_pages.value(username)->appendMessage("System", QString("%1 is now %2.").arg(username).arg(status ? "online" : "offline"), Qt::gray);
 }
 
 void MessageWindow::tabCloseRequested(int index)

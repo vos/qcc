@@ -24,6 +24,7 @@ public:
 
     bool addTab(const QString &username, const QIcon &icon);
     void appendMessage(const QString &username, const QString &message);
+    void updateStatus(const QString &username, int status, const QIcon &icon);
 
 private slots:
     void tabCloseRequested(int index);

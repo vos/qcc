@@ -1,18 +1,26 @@
 #include "messagepage.h"
 #include "ui_messagepage.h"
 
+#include <QKeyEvent>
+
 #include "qccpacket.h"
 
 MessagePage::MessagePage(QWidget *parent) :
     QWidget(parent), ui(new Ui::MessagePage)
 {
-    ui->setupUi(this);
+    initialize();
 }
 
-MessagePage::MessagePage(QTcpSocket *socket, const QString &username, const QIcon &icon, QWidget *parent) :
-    QWidget(parent), ui(new Ui::MessagePage), m_socket(socket), m_username(username), m_icon(icon)
+MessagePage::MessagePage(QTcpSocket *socket, const QString &username, QWidget *parent) :
+    QWidget(parent), ui(new Ui::MessagePage), m_socket(socket), m_username(username)
+{
+    initialize();
+}
+
+void MessagePage::initialize()
 {
     ui->setupUi(this);
+    ui->messageTextEdit->installEventFilter(this);
 }
 
 MessagePage::~MessagePage()
@@ -46,4 +54,20 @@ void MessagePage::on_sendButton_clicked()
 
     ui->messageTextEdit->clear();
     ui->messageTextEdit->setFocus();
+}
+
+bool MessagePage::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == ui->messageTextEdit) {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && keyEvent->modifiers() == Qt::NoModifier) {
+                on_sendButton_clicked();
+                return true;
+            } else
+                return false;
+        } else
+            return false;
+    } else
+        return QWidget::eventFilter(obj, event);
 }

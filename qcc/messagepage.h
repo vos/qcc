@@ -18,12 +18,10 @@ class MessagePage : public QWidget
 
 public:
     explicit MessagePage(QWidget *parent = 0);
-    MessagePage(QTcpSocket *socket, const QString &username, const QIcon &icon = QIcon(), QWidget *parent = 0);
+    MessagePage(QTcpSocket *socket, const QString &username, QWidget *parent = 0);
     ~MessagePage();
 
     const QString& getUsername() const { return m_username; }
-    const QIcon& getIcon() const { return m_icon; }
-
     void appendMessage(const QString &username, const QString &message, const QColor &color = Qt::black);
 
 signals:
@@ -37,7 +35,9 @@ private:
     Ui::MessagePage *ui;
     QTcpSocket *m_socket;
     QString m_username;
-    QIcon m_icon;
+
+    void initialize();
+    bool eventFilter(QObject *obj, QEvent *event);
 };
 
 #endif // MESSAGEPAGE_H

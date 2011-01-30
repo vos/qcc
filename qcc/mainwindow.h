@@ -24,6 +24,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void connectToHost();
     void socket_connected();
     void socket_disconnected();
     void socket_readyRead();
@@ -43,10 +44,10 @@ private:
     static QIcon offlineIcon, onlineIcon;
 
     Ui::MainWindow *ui;
+    MessageWindow *m_messageWindow;
     QTcpSocket m_socket;
     quint32 m_packetSize;
     bool m_register;
-    MessageWindow *m_messageWindow;
 
     void closeEvent(QCloseEvent *);
 };
