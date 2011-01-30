@@ -413,7 +413,7 @@ void Server::client_statusChanged()
         if (client->user->containsContact(user->getUsername())) {
             packet.send(client->user->getSocket());
 #ifdef DEBUG
-    qDebug("ContactStatusChanged(): send to contact '%s'", qPrintable(client->user->getUsername()));
+    qDebug("ContactStatusChanged: send to contact '%s'", qPrintable(client->user->getUsername()));
 #endif
         }
     }
