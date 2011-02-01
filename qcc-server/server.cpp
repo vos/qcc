@@ -26,6 +26,10 @@ Server::~Server()
 
 void Server::loadUsers()
 {
+#ifdef DEBUG
+    qDebug("Server::loadUsers()");
+#endif
+
     QFile file("users.xml");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning("Server::loadUsers(): cannot read file users.xml => %s", qPrintable(file.errorString()));
@@ -60,6 +64,10 @@ void Server::loadUsers()
 
 void Server::saveUsers()
 {
+#ifdef DEBUG
+    qDebug("Server::saveUsers()");
+#endif
+
     QFile file("users.xml");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning("Server::saveUsers(): cannot write file users.xml => %s", qPrintable(file.errorString()));
@@ -342,16 +350,16 @@ void Server::client_readyRead()
         QString receiverName;
         QString message;
         in >> id >> receiverName >> message;
-        if (!client->user->containsContact(receiverName)) {
-            QString reason = QString("The user \"%1\" is not on your contact list.").arg(receiverName);
-            QccPacket packet(QccPacket::MessageFailure);
-            packet.stream() << reason;
-            packet.send(socket);
-#ifdef DEBUG
-            qDebug("MessageFailure: %s", qPrintable(reason));
-#endif
-            break;
-        }
+//        if (!client->user->containsContact(receiverName)) {
+//            QString reason = QString("The user \"%1\" is not on your contact list.").arg(receiverName);
+//            QccPacket packet(QccPacket::MessageFailure);
+//            packet.stream() << reason;
+//            packet.send(socket);
+//#ifdef DEBUG
+//            qDebug("MessageFailure: %s", qPrintable(reason));
+//#endif
+//            break;
+//        }
         User *receiver = m_users.value(receiverName);
         if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::Message);

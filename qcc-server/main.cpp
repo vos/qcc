@@ -7,10 +7,10 @@
 
 #include "server.h"
 
-static const quint16 DEFAULT_PORT = 12345;
+const quint16 DEFAULT_PORT = 12345;
 
 // helper function for reading a command line argument of type quint16
-quint16 readShort(const QStringList &arguments, const QString &name, quint16 defaultValue = -1)
+quint16 readShort(const QStringList &arguments, const QString &name, quint16 defaultValue = 0)
 {
     if (arguments.isEmpty())
         return defaultValue;
@@ -27,10 +27,10 @@ quint16 readShort(const QStringList &arguments, const QString &name, quint16 def
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-
     QStringList arguments = QCoreApplication::arguments();
+
 #ifdef DEBUG
-    qDebug() << "arguments: " << arguments;
+    qDebug() << "QCC server started with arguments:" << arguments;
 #endif
 
     QHostAddress adress = QHostAddress::Any;
