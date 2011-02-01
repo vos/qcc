@@ -10,6 +10,8 @@
 #include <QDebug>
 #endif
 
+#include "user.h"
+
 Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
@@ -406,7 +408,7 @@ void Server::client_statusChanged()
 
     // inform all online users that have this user on their contact list of the status change
     QccPacket packet(QccPacket::ContactStatusChanged);
-    packet.stream() << user->getUsername() << user->getStatus();
+    packet.stream() << user->getUsername() << (qint32)user->getStatus();
     foreach (Client *client, m_clients.values()) {
         if (client->user == NULL)
             continue;

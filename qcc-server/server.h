@@ -4,7 +4,7 @@
 #include <QTcpServer>
 #include <QHash>
 
-#include "user.h"
+class User;
 
 class Server : public QTcpServer
 {

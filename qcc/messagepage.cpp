@@ -20,6 +20,8 @@ MessagePage::MessagePage(QTcpSocket *socket, const QString &username, QWidget *p
 void MessagePage::initialize()
 {
     ui->setupUi(this);
+
+    connect(ui->closeButton, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
     ui->messageTextEdit->installEventFilter(this);
 }
 
@@ -33,11 +35,6 @@ void MessagePage::appendMessage(const QString &username, const QString &message,
     QString messageHtml = message;
     messageHtml.replace('\n', "<br/>");
     ui->messagesTextEdit->append("<span style=\"color: " + color.name() + ";\">" + username + "</span>: " + messageHtml);
-}
-
-void MessagePage::on_closeButton_clicked()
-{
-    emit closeButtonClicked();
 }
 
 void MessagePage::on_sendButton_clicked()
