@@ -27,6 +27,9 @@ public:
 signals:
     void closeButtonClicked();
 
+public slots:
+    void setFocusOnInput();
+
 private slots:
     void on_sendButton_clicked();
 

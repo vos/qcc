@@ -53,6 +53,11 @@ void MessagePage::on_sendButton_clicked()
     ui->messageTextEdit->setFocus();
 }
 
+void MessagePage::setFocusOnInput()
+{
+    ui->messageTextEdit->setFocus();
+}
+
 bool MessagePage::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == ui->messageTextEdit) {

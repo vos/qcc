@@ -23,6 +23,7 @@ public:
     ~MessageWindow();
 
     bool addTab(const QString &username, const QIcon &icon);
+    void removeTab(const QString &username);
     void appendMessage(const QString &username, const QString &message);
     void updateStatus(const QString &username, int status, const QIcon &icon);
 

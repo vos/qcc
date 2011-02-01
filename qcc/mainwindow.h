@@ -32,10 +32,12 @@ private slots:
 #ifdef DEBUG
     void socket_stateChanged(QAbstractSocket::SocketState state);
 #endif
+    void removeCurrentContact(bool);
 
     void on_loginButton_clicked();
     void on_registerButton_clicked();
     void on_contactListWidget_activated(const QModelIndex &index);
+    void on_contactListWidget_customContextMenuRequested(const QPoint &pos);
     void on_addContactButton_clicked();
 
 private:

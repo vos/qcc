@@ -3,6 +3,7 @@
 
 #include <QCryptographicHash>
 #include <QMessageBox>
+#include <QMenu>
 #include <QDebug>
 
 #include "qccpacket.h"
@@ -142,10 +143,14 @@ void MainWindow::socket_readyRead()
         QString username;
         in >> username;
 
-        QccPacket packet(QccPacket::AuthorizationAccepted);
+        int question = QMessageBox::question(this, "Request Authorization", "The user \"" + username +
+                                           "\" would like to add you to her/his contact list.\n"
+                                           "Do you accept the authorization request?",
+                                           "Accept", "Reject");
+
+        QccPacket packet(question == 0 ? QccPacket::AuthorizationAccepted : QccPacket::AuthorizationRejected);
         packet.stream() << username;
         packet.send(&m_socket);
-
         break;
     }
     case QccPacket::AuthorizationAccepted:
@@ -161,7 +166,7 @@ void MainWindow::socket_readyRead()
     {
         QString username;
         in >> username;
-        QMessageBox::warning(this, "Authorization Rejected", username);
+        QMessageBox::information(this, "Authorization Rejected", "The user \"" + username + "\" rejected your authorization request.");
         break;
     }
     case QccPacket::AuthorizationFailure:
@@ -190,8 +195,6 @@ void MainWindow::socket_readyRead()
         QString username;
         qint32 status;
         in >> username >> status;
-        qDebug() << "ContactStatusChanged: " << username << " => " << status;
-
         QIcon icon = status ? MainWindow::onlineIcon : MainWindow::offlineIcon;
         for (int i = 0; i < ui->contactListWidget->count(); i++) {
             QListWidgetItem *item = ui->contactListWidget->item(i);
@@ -207,14 +210,15 @@ void MainWindow::socket_readyRead()
     {
         QString username;
         in >> username;
+
         for (int i = 0; i < ui->contactListWidget->count(); i++) {
             QListWidgetItem *item = ui->contactListWidget->item(i);
-            if (item->text() == username) {
-                ui->contactListWidget->removeItemWidget(item);
+            if (item && item->text() == username) {
+                delete ui->contactListWidget->takeItem(i);
                 break;
             }
         }
-        // TODO update open chat window
+        m_messageWindow->removeTab(username);
         break;
     }
     case QccPacket::Message:
@@ -225,9 +229,6 @@ void MainWindow::socket_readyRead()
 
         m_messageWindow->addTab(username, MainWindow::onlineIcon);
         m_messageWindow->appendMessage(username, message);
-        m_messageWindow->show();
-        m_messageWindow->activateWindow();
-        m_messageWindow->raise();
 
         QccPacket packet(QccPacket::MessageSuccess);
         packet.stream() << id << username;
@@ -291,9 +292,14 @@ void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
     QListWidgetItem *item = ui->contactListWidget->item(index.row());
     if (!item) return;
     m_messageWindow->addTab(item->text(), item->icon());
-    m_messageWindow->show();
-    m_messageWindow->activateWindow();
-    m_messageWindow->raise();
+}
+
+void MainWindow::on_contactListWidget_customContextMenuRequested(const QPoint &pos)
+{
+    QString username = ui->contactListWidget->currentItem()->text();
+    QMenu menu(ui->contactListWidget);
+    menu.addAction("Remove contact \"" + username + "\"", this, SLOT(removeCurrentContact(bool)));
+    menu.exec(ui->contactListWidget->mapToGlobal(pos));
 }
 
 void MainWindow::on_addContactButton_clicked()
@@ -307,6 +313,17 @@ void MainWindow::on_addContactButton_clicked()
     packet.send(&m_socket);
 
     ui->contactLineEdit->clear();
+}
+
+void MainWindow::removeCurrentContact(bool)
+{
+    QString username = ui->contactListWidget->currentItem()->text();
+    if (username.isEmpty())
+        return;
+
+    QccPacket packet(QccPacket::RemoveContact);
+    packet.stream() << username;
+    packet.send(&m_socket);
 }
 
 void MainWindow::closeEvent(QCloseEvent *)
