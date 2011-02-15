@@ -156,16 +156,19 @@ void MainWindow::socket_readyRead()
         QString username;
         qint32 status;
         in >> username >> status;
-        Contact *contact = new Contact(username);
+        Contact *contact = m_contacts->contact(username);
+        if (!contact) {
+            contact = new Contact(username);
+            m_contacts->add(contact);
+        }
         contact->setStatus((Contact::Status)status);
-        m_contacts->add(contact);
         break;
     }
     case QccPacket::AuthorizationDeclined:
     {
         QString username;
         in >> username;
-        QMessageBox::information(this, "Authorization Declined", "The user \"" + username + "\" declined your authorization request.");
+        QMessageBox::information(this, "Authorization Declined", "The user \"" + username + "\" has declined your authorization request.");
         break;
     }
     case QccPacket::AuthorizationFailure:
@@ -198,18 +201,19 @@ void MainWindow::socket_readyRead()
         qint32 status;
         in >> username >> status;
         Contact *contact = m_contacts->contact(username);
-        if (!contact)
-            break;
-        contact->setStatus((Contact::Status)status);
-        m_messageWindow->updateStatus(username, status, contact->statusIcon());
+        if (contact)
+            contact->setStatus((Contact::Status)status);
         break;
     }
     case QccPacket::ContactRemoved:
     {
         QString username;
         in >> username;
-        m_messageWindow->removeTab(username);
-        m_contacts->remove(username);
+        Contact *contact = m_contacts->contact(username);
+        if (contact) {
+            m_messageWindow->closeTab(contact);
+            m_contacts->remove(contact);
+        }
         break;
     }
     case QccPacket::Message:
@@ -218,8 +222,13 @@ void MainWindow::socket_readyRead()
         QString username, message;
         in >> id >> username >> message;
 
-        //m_messageWindow->addTab(username, MainWindow::onlineIcon);
-        m_messageWindow->appendMessage(username, message);
+        Contact *contact = m_contacts->contact(username);
+        if (!contact) { // received message from unknown user (not on contact list)
+            contact = new Contact(username);
+            m_contacts->add(contact);
+        }
+
+        m_messageWindow->appendMessage(contact, message);
 
         QccPacket packet(QccPacket::MessageSuccess);
         packet.stream() << id << username;
@@ -282,7 +291,7 @@ void MainWindow::on_contactListView_activated(const QModelIndex &index)
 {
     Contact *contact = m_contacts->contact(index);
     if (!contact) return;
-    m_messageWindow->addTab(contact->username(), contact->statusIcon());
+    m_messageWindow->addTab(contact);
 }
 
 void MainWindow::on_contactListView_customContextMenuRequested(const QPoint &pos)

@@ -36,6 +36,7 @@ void ContactListModel::add(Contact *contact)
         return;
 
     beginInsertRows(QModelIndex(), m_contacts.count(), m_contacts.count());
+    connect(contact, SIGNAL(statusChanged()), SLOT(contact_statusChanged()));
     m_contacts.append(contact);
     endInsertRows();
 }
@@ -46,6 +47,8 @@ void ContactListModel::add(const QList<Contact*> &contacts)
         return;
 
     beginInsertRows(QModelIndex(), m_contacts.count(), m_contacts.count() + contacts.count());
+    foreach (Contact *contact, contacts)
+        connect(contact, SIGNAL(statusChanged()), SLOT(contact_statusChanged()));
     m_contacts.append(contacts);
     endInsertRows();
 }
@@ -106,4 +109,19 @@ Contact* ContactListModel::contact(const QModelIndex &index)
     if (index.row() >= m_contacts.count())
         return NULL;
     return m_contacts.at(index.row());
+}
+
+void ContactListModel::contact_statusChanged()
+{
+    Contact *contact = qobject_cast<Contact*>(sender());
+    if (!contact) {
+        qWarning("ContactListModel::contact_statusChanged(): Cast of sender() to Contact* failed");
+        return;
+    }
+
+    int listIndex = m_contacts.indexOf(contact);
+    if (listIndex < 0)
+        return;
+    QModelIndex modelIndex = index(listIndex);
+    dataChanged(modelIndex, modelIndex);
 }

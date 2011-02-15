@@ -28,6 +28,9 @@ public:
 public slots:
     void clear();
 
+private slots:
+    void contact_statusChanged();
+
 private:
     QList<Contact*> m_contacts;
 };

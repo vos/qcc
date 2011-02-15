@@ -12,17 +12,19 @@ namespace Ui {
     class MessagePage;
 }
 
+class Contact;
+
 class MessagePage : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit MessagePage(QWidget *parent = 0);
-    MessagePage(QTcpSocket *socket, const QString &username, QWidget *parent = 0);
+    MessagePage(QTcpSocket *socket, Contact *contact, QWidget *parent = 0);
     ~MessagePage();
 
-    const QString& getUsername() const { return m_username; }
-    void appendMessage(const QString &username, const QString &message, const QColor &color = Qt::black);
+    inline Contact* contact() { return m_contact; }
+    void appendMessage(Contact *contact, const QString &message, const QColor &color = Qt::black);
 
 signals:
     void closeButtonClicked();
@@ -32,11 +34,12 @@ public slots:
 
 private slots:
     void on_sendButton_clicked();
+    void contact_statusChanged();
 
 private:
     Ui::MessagePage *ui;
     QTcpSocket *m_socket;
-    QString m_username;
+    Contact *m_contact;
 
     void initialize();
     bool eventFilter(QObject *obj, QEvent *event);

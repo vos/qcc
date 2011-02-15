@@ -1,13 +1,13 @@
 #include "messagewindow.h"
 #include "ui_messagewindow.h"
 
+#include "contact.h"
 #include "messagepage.h"
 
 MessageWindow::MessageWindow(QTcpSocket *socket, QWidget *parent) :
     QTabWidget(parent), ui(new Ui::MessageWindow), m_socket(socket)
 {
     ui->setupUi(this);
-
     connect(this, SIGNAL(tabCloseRequested(int)), SLOT(tabCloseRequested(int)));
 }
 
@@ -17,19 +17,23 @@ MessageWindow::~MessageWindow()
     delete ui;
 }
 
-bool MessageWindow::addTab(const QString &username, const QIcon &icon)
+bool MessageWindow::addTab(Contact *contact)
 {
+    if (!contact)
+        return false;
+
     bool tabAdded = false;
     MessagePage *page = NULL;
 
-    if (m_pages.contains(username)) {
-        page = m_pages.value(username);
+    if (m_pages.contains(contact)) {
+        page = m_pages.value(contact);
         setCurrentWidget(page);
     } else {
-        page = new MessagePage(m_socket, username);
+        page = new MessagePage(m_socket, contact);
+        connect(contact, SIGNAL(statusChanged()), SLOT(contact_statusChanged()));
         connect(page, SIGNAL(closeButtonClicked()), SLOT(page_closeButtonClicked()));
-        int index = QTabWidget::addTab(page, icon, username);
-        m_pages.insert(username, page);
+        int index = QTabWidget::addTab(page, contact->statusIcon(), contact->username());
+        m_pages.insert(contact, page);
         setCurrentIndex(index);
         tabAdded = true;
     }
@@ -43,41 +47,44 @@ bool MessageWindow::addTab(const QString &username, const QIcon &icon)
     return tabAdded;
 }
 
-void MessageWindow::removeTab(const QString &username)
+void MessageWindow::closeTab(Contact *contact)
 {
-    if (!m_pages.contains(username))
+    if (!m_pages.contains(contact))
         return;
 
     // find tab and close it
     for (int i = 0; i < count(); i++) {
-        if (tabText(i) == username) {
+        if (tabText(i) == contact->username()) {
             tabCloseRequested(i);
             return;
         }
     }
 }
 
-void MessageWindow::appendMessage(const QString &username, const QString &message)
+void MessageWindow::appendMessage(Contact *contact, const QString &message)
 {
-    if (!m_pages.contains(username))
+    if (!contact)
         return;
 
-    m_pages.value(username)->appendMessage(username, message, Qt::red);
+    addTab(contact);
+    m_pages.value(contact)->appendMessage(contact, message, Qt::red);
 }
 
-void MessageWindow::updateStatus(const QString &username, int status, const QIcon &icon)
+void MessageWindow::contact_statusChanged()
 {
-    if (!m_pages.contains(username))
+    Contact *contact = qobject_cast<Contact*>(sender());
+    if (!contact) {
+        qWarning("MessageWindow::contact_statusChanged(): Cast of sender() to Contact* failed");
         return;
+    }
 
     // find tab and update the icon
     for (int i = 0; i < count(); i++) {
-        if (tabText(i) == username) {
-            setTabIcon(i, icon);
-            break;
+        if (tabText(i) == contact->username()) {
+            setTabIcon(i, contact->statusIcon());
+            return;
         }
     }
-    m_pages.value(username)->appendMessage("System", QString("%1 is now %2.").arg(username).arg(status ? "online" : "offline"), Qt::gray);
 }
 
 void MessageWindow::tabCloseRequested(int index)
@@ -88,9 +95,9 @@ void MessageWindow::tabCloseRequested(int index)
         return;
     }
 
-    page->disconnect();
-    m_pages.remove(page->getUsername());
+    m_pages.remove(page->contact());
     QTabWidget::removeTab(index);
+    disconnect(page->contact(), SIGNAL(statusChanged()), this, SLOT(contact_statusChanged()));
     delete page;
 
 #ifdef DEBUG

@@ -8,6 +8,7 @@ QT_BEGIN_NAMESPACE
 class QTcpSocket;
 QT_BEGIN_NAMESPACE
 
+class Contact;
 class MessagePage;
 
 namespace Ui {
@@ -22,19 +23,19 @@ public:
     explicit MessageWindow(QTcpSocket *socket, QWidget *parent = 0);
     ~MessageWindow();
 
-    bool addTab(const QString &username, const QIcon &icon);
-    void removeTab(const QString &username);
-    void appendMessage(const QString &username, const QString &message);
-    void updateStatus(const QString &username, int status, const QIcon &icon);
+    bool addTab(Contact *contact);
+    void closeTab(Contact *contact);
+    void appendMessage(Contact *contact, const QString &message);
 
 private slots:
+    void contact_statusChanged();
     void tabCloseRequested(int index);
     void page_closeButtonClicked();
 
 private:
     Ui::MessageWindow *ui;
     QTcpSocket *m_socket;
-    QHash<QString, MessagePage*> m_pages;
+    QHash<Contact*, MessagePage*> m_pages;
 };
 
 #endif // MESSAGEWINDOW_H
