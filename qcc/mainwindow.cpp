@@ -7,29 +7,24 @@
 #include <QDebug>
 
 #include "qccpacket.h"
+#include "contact.h"
+#include "contactlistmodel.h"
 #include "messagewindow.h"
 
-QCryptographicHash *MainWindow::HASH = new QCryptographicHash(QCryptographicHash::Sha1);
+QCryptographicHash *MainWindow::Hash = new QCryptographicHash(QCryptographicHash::Sha1);
 
 QString MainWindow::hashString(const QString &str)
 {
-    MainWindow::HASH->reset();
-    MainWindow::HASH->addData(str.toAscii());
-    return MainWindow::HASH->result().toHex();
+    MainWindow::Hash->reset();
+    MainWindow::Hash->addData(str.toAscii());
+    return MainWindow::Hash->result().toHex();
 }
 
-QIcon MainWindow::offlineIcon;
-QIcon MainWindow::onlineIcon;
-
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow), m_messageWindow(new MessageWindow(&m_socket)), m_packetSize(0)
+    QMainWindow(parent), ui(new Ui::MainWindow), m_contacts(new ContactListModel(this)),
+    m_messageWindow(new MessageWindow(&m_socket)), m_packetSize(0)
 {
     ui->setupUi(this);
-
-    if (MainWindow::offlineIcon.isNull()) {
-        MainWindow::offlineIcon = QIcon(":/icons/offline.png");
-        MainWindow::onlineIcon = QIcon(":/icons/online.png");
-    }
 
     connect(&m_socket, SIGNAL(connected()), SLOT(socket_connected()));
     connect(&m_socket, SIGNAL(disconnected()), SLOT(socket_disconnected()));
@@ -38,11 +33,14 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef DEBUG
     connect(&m_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(socket_stateChanged(QAbstractSocket::SocketState)));
 #endif
+
+    ui->contactListView->setModel(m_contacts);
 }
 
 MainWindow::~MainWindow()
 {
     delete m_messageWindow;
+    delete m_contacts;
     delete ui;
 }
 
@@ -146,9 +144,9 @@ void MainWindow::socket_readyRead()
         int question = QMessageBox::question(this, "Request Authorization", "The user \"" + username +
                                            "\" would like to add you to her/his contact list.\n"
                                            "Do you accept the authorization request?",
-                                           "Accept", "Reject");
+                                           "Accept", "Decline");
 
-        QccPacket packet(question == 0 ? QccPacket::AuthorizationAccepted : QccPacket::AuthorizationRejected);
+        QccPacket packet(question == 0 ? QccPacket::AuthorizationAccepted : QccPacket::AuthorizationDeclined);
         packet.stream() << username;
         packet.send(&m_socket);
         break;
@@ -158,15 +156,16 @@ void MainWindow::socket_readyRead()
         QString username;
         qint32 status;
         in >> username >> status;
-        QListWidgetItem *contactItem = new QListWidgetItem(status ? MainWindow::onlineIcon : MainWindow::offlineIcon, username);
-        ui->contactListWidget->addItem(contactItem);
+        Contact *contact = new Contact(username);
+        contact->setStatus((Contact::Status)status);
+        m_contacts->add(contact);
         break;
     }
-    case QccPacket::AuthorizationRejected:
+    case QccPacket::AuthorizationDeclined:
     {
         QString username;
         in >> username;
-        QMessageBox::information(this, "Authorization Rejected", "The user \"" + username + "\" rejected your authorization request.");
+        QMessageBox::information(this, "Authorization Declined", "The user \"" + username + "\" declined your authorization request.");
         break;
     }
     case QccPacket::AuthorizationFailure:
@@ -180,14 +179,17 @@ void MainWindow::socket_readyRead()
     {
         qint32 contactCount;
         in >> contactCount;
-        ui->contactListWidget->clear();
+        m_contacts->clear();
+        QList<Contact*> contacts;
         for (int i = 0; i < contactCount; i++) {
             QString username;
             qint32 status;
             in >> username >> status;
-            QListWidgetItem *contactItem = new QListWidgetItem(status ? MainWindow::onlineIcon : MainWindow::offlineIcon, username);
-            ui->contactListWidget->addItem(contactItem);
+            Contact *contact = new Contact(username);
+            contact->setStatus((Contact::Status)status);
+            contacts.append(contact);
         }
+        m_contacts->add(contacts);
         break;
     }
     case QccPacket::ContactStatusChanged:
@@ -195,30 +197,19 @@ void MainWindow::socket_readyRead()
         QString username;
         qint32 status;
         in >> username >> status;
-        QIcon icon = status ? MainWindow::onlineIcon : MainWindow::offlineIcon;
-        for (int i = 0; i < ui->contactListWidget->count(); i++) {
-            QListWidgetItem *item = ui->contactListWidget->item(i);
-            if (item->text() == username) {
-                item->setIcon(icon);
-                break;
-            }
-        }
-        m_messageWindow->updateStatus(username, status, icon);
+        Contact *contact = m_contacts->contact(username);
+        if (!contact)
+            break;
+        contact->setStatus((Contact::Status)status);
+        m_messageWindow->updateStatus(username, status, contact->statusIcon());
         break;
     }
     case QccPacket::ContactRemoved:
     {
         QString username;
         in >> username;
-
-        for (int i = 0; i < ui->contactListWidget->count(); i++) {
-            QListWidgetItem *item = ui->contactListWidget->item(i);
-            if (item && item->text() == username) {
-                delete ui->contactListWidget->takeItem(i);
-                break;
-            }
-        }
         m_messageWindow->removeTab(username);
+        m_contacts->remove(username);
         break;
     }
     case QccPacket::Message:
@@ -227,7 +218,7 @@ void MainWindow::socket_readyRead()
         QString username, message;
         in >> id >> username >> message;
 
-        m_messageWindow->addTab(username, MainWindow::onlineIcon);
+        //m_messageWindow->addTab(username, MainWindow::onlineIcon);
         m_messageWindow->appendMessage(username, message);
 
         QccPacket packet(QccPacket::MessageSuccess);
@@ -287,19 +278,20 @@ void MainWindow::on_registerButton_clicked()
     connectToHost();
 }
 
-void MainWindow::on_contactListWidget_activated(const QModelIndex &index)
+void MainWindow::on_contactListView_activated(const QModelIndex &index)
 {
-    QListWidgetItem *item = ui->contactListWidget->item(index.row());
-    if (!item) return;
-    m_messageWindow->addTab(item->text(), item->icon());
+    Contact *contact = m_contacts->contact(index);
+    if (!contact) return;
+    m_messageWindow->addTab(contact->username(), contact->statusIcon());
 }
 
-void MainWindow::on_contactListWidget_customContextMenuRequested(const QPoint &pos)
+void MainWindow::on_contactListView_customContextMenuRequested(const QPoint &pos)
 {
-    QString username = ui->contactListWidget->currentItem()->text();
-    QMenu menu(ui->contactListWidget);
-    menu.addAction("Remove contact \"" + username + "\"", this, SLOT(removeCurrentContact(bool)));
-    menu.exec(ui->contactListWidget->mapToGlobal(pos));
+    Contact *contact = m_contacts->contact(ui->contactListView->currentIndex());
+    if (!contact) return;
+    QMenu menu(ui->contactListView);
+    menu.addAction("Remove contact \"" + contact->username() + "\"", this, SLOT(removeCurrentContact(bool)));
+    menu.exec(ui->contactListView->mapToGlobal(pos));
 }
 
 void MainWindow::on_addContactButton_clicked()
@@ -317,12 +309,12 @@ void MainWindow::on_addContactButton_clicked()
 
 void MainWindow::removeCurrentContact(bool)
 {
-    QString username = ui->contactListWidget->currentItem()->text();
-    if (username.isEmpty())
+    Contact *contact = m_contacts->contact(ui->contactListView->currentIndex());
+    if (!contact || !contact->isValid())
         return;
 
     QccPacket packet(QccPacket::RemoveContact);
-    packet.stream() << username;
+    packet.stream() << contact->username();
     packet.send(&m_socket);
 }
 

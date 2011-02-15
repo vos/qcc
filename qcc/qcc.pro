@@ -22,14 +22,18 @@ INCLUDEPATH += ../qcc-core
 LIBS += -L$$LIBQCCPATH -lqcc-core
 
 
+HEADERS += mainwindow.h \
+           messagewindow.h \
+           messagepage.h \
+           contact.h \
+           contactlistmodel.h
+
 SOURCES += main.cpp \
            mainwindow.cpp \
            messagewindow.cpp \
-           messagepage.cpp
-
-HEADERS += mainwindow.h \
-           messagewindow.h \
-           messagepage.h
+           messagepage.cpp \
+           contact.cpp \
+           contactlistmodel.cpp
 
 FORMS += mainwindow.ui \
          messagewindow.ui \

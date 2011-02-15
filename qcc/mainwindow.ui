@@ -98,7 +98,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QListWidget" name="contactListWidget">
+         <widget class="QListView" name="contactListView">
           <property name="contextMenuPolicy">
            <enum>Qt::CustomContextMenu</enum>
           </property>
@@ -113,9 +113,6 @@
             <width>16</width>
             <height>16</height>
            </size>
-          </property>
-          <property name="sortingEnabled">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -154,7 +151,7 @@
   <tabstop>passwordLineEdit</tabstop>
   <tabstop>loginButton</tabstop>
   <tabstop>registerButton</tabstop>
-  <tabstop>contactListWidget</tabstop>
+  <tabstop>contactListView</tabstop>
   <tabstop>contactLineEdit</tabstop>
   <tabstop>addContactButton</tabstop>
  </tabstops>
