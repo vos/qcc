@@ -11,9 +11,11 @@ TEMPLATE = lib
 CONFIG += staticlib create_prl
 
 
-HEADERS += qccpacket.h
+HEADERS += qccpacket.h \
+           abstractuser.h
 
-SOURCES += qccpacket.cpp
+SOURCES += qccpacket.cpp \
+           abstractuser.cpp
 
 
 unix:!symbian {

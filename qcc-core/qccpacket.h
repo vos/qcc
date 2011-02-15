@@ -22,7 +22,7 @@ public:
         AuthenticationFailure, // QString(reason)
         RequestAuthorization,  // QString(username)
         AuthorizationAccepted, // QString(username), [qint32(status)|client]
-        AuthorizationRejected, // QString(username)
+        AuthorizationDeclined, // QString(username)
         AuthorizationFailure,  // QString(reason)
         RequestContactList,
         ContactList,           // qint32(count), QString(username), qint32(status), QString(username), qint32(status), ...

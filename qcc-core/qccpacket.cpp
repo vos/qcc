@@ -13,7 +13,7 @@ const char* QccPacket::PacketTypeNames[] = {
     "AuthenticationFailure",
     "RequestAuthorization",
     "AuthorizationAccepted",
-    "AuthorizationRejected",
+    "AuthorizationDeclined",
     "AuthorizationFailure",
     "RequestContactList",
     "ContactList",
@@ -26,7 +26,7 @@ const char* QccPacket::PacketTypeNames[] = {
     "IllegalMessage"
 };
 
-QString QccPacket::typeString(QccPacket::PacketType type)
+QString QccPacket::typeString(PacketType type)
 {
     return QccPacket::PacketTypeNames[type];
 }
