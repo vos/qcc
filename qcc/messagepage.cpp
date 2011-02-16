@@ -33,26 +33,29 @@ MessagePage::~MessagePage()
     delete ui;
 }
 
-void MessagePage::appendMessage(Contact *contact, const QString &message, const QColor &color)
+void MessagePage::appendMessage(const QString &message, const QColor &color)
 {
     QString messageHtml = message;
     messageHtml.replace('\n', "<br/>");
     ui->messagesTextEdit->append("<span style=\"color: " + color.name() + ";\">" +
-                                 (contact ? contact->username() : "You") + "</span>: " + messageHtml);
+                                 m_contact->username() + "</span>: " + messageHtml);
 }
 
 void MessagePage::contact_statusChanged()
 {
-    ui->messagesTextEdit->append(QString("%1 is now %2.").arg(m_contact->username()).arg(m_contact->statusString()));
+    ui->messagesTextEdit->append(QString("%1 is now %2.").
+                                 arg(m_contact->username()).
+                                 arg(m_contact->statusString()));
 }
 
 void MessagePage::on_sendButton_clicked()
 {
-    QString text = ui->messageTextEdit->toPlainText();
+    QString text = ui->messageTextEdit->toPlainText().trimmed();
     if (text.isEmpty())
         return;
 
-    appendMessage(NULL, text, Qt::blue);
+    text.replace('\n', "<br/>");
+    ui->messagesTextEdit->append("<span style=\"color: #00f;\">You</span>: " + text);
 
     QccPacket message;
     message.stream() << qint32(qrand()) << m_contact->username() << text;
@@ -72,7 +75,8 @@ bool MessagePage::eventFilter(QObject *obj, QEvent *event)
     if (obj == ui->messageTextEdit) {
         if (event->type() == QEvent::KeyPress) {
             QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-            if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && keyEvent->modifiers() == Qt::NoModifier) {
+            if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
+                    && keyEvent->modifiers() == Qt::NoModifier) {
                 on_sendButton_clicked();
                 return true;
             } else

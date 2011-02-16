@@ -24,7 +24,7 @@ public:
     ~MessagePage();
 
     inline Contact* contact() { return m_contact; }
-    void appendMessage(Contact *contact, const QString &message, const QColor &color = Qt::black);
+    void appendMessage(const QString &message, const QColor &color = Qt::black);
 
 signals:
     void closeButtonClicked();

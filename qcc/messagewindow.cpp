@@ -67,7 +67,7 @@ void MessageWindow::appendMessage(Contact *contact, const QString &message)
         return;
 
     addTab(contact);
-    m_pages.value(contact)->appendMessage(contact, message, Qt::red);
+    m_pages.value(contact)->appendMessage(message, Qt::red);
 }
 
 void MessageWindow::contact_statusChanged()
