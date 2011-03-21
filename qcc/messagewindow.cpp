@@ -39,8 +39,8 @@ bool MessageWindow::addTab(Contact *contact)
     }
 
     show();
-    activateWindow();
     raise();
+    activateWindow();
     if (page != NULL)
         page->setFocusOnInput();
 

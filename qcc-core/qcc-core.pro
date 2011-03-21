@@ -10,19 +10,8 @@ TARGET = qcc-core
 TEMPLATE = lib
 CONFIG += staticlib create_prl
 
-
 HEADERS += qccpacket.h \
            abstractuser.h
 
 SOURCES += qccpacket.cpp \
            abstractuser.cpp
-
-
-unix:!symbian {
-    maemo5 {
-        target.path = /opt/usr/lib
-    } else {
-        target.path = /usr/local/lib
-    }
-    INSTALLS += target
-}

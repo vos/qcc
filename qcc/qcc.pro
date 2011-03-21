@@ -8,19 +8,18 @@ QT = core gui network
 
 TARGET = qcc
 TEMPLATE = app
-CONFIG += link_prl
+CONFIG += link_prl crypto
 
 CONFIG(debug, debug|release) {
     DEFINES += DEBUG
-    LIBQCCPATH = ../qcc-core-build-desktop/debug
+    QCC_PREFIX = ../qcc-core-build-desktop/debug
 } else {
     DEFINES += RELEASE
-    LIBQCCPATH = ../qcc-core-build-desktop/release
+    QCC_PREFIX = ../qcc-core-build-desktop/release
 }
 
 INCLUDEPATH += ../qcc-core
-LIBS += -L$$LIBQCCPATH -lqcc-core
-
+LIBS += -L$$QCC_PREFIX -lqcc-core
 
 HEADERS += mainwindow.h \
            messagewindow.h \
