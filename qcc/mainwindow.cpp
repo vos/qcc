@@ -1,24 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-#include <QCryptographicHash>
-#include <QMessageBox>
-#include <QMenu>
-#include <QDebug>
-
 #include "qccpacket.h"
 #include "contact.h"
 #include "contactlistmodel.h"
 #include "messagewindow.h"
 
-QCryptographicHash *MainWindow::Hash = new QCryptographicHash(QCryptographicHash::Sha1);
-
-QString MainWindow::hashString(const QString &str)
-{
-    MainWindow::Hash->reset();
-    MainWindow::Hash->addData(str.toAscii());
-    return MainWindow::Hash->result().toHex();
-}
+#include <QMessageBox>
+#include <QMenu>
+#include <QTimer>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::MainWindow), m_contacts(new ContactListModel(this)),
@@ -35,12 +25,16 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
     ui->contactListView->setModel(m_contacts);
-    m_qcaInit = new QCA::Initializer;
+
+    QCA::init();
+    if (!QCA::isSupported("sha256") || !QCA::isSupported("pkey") || !QCA::PKey::supportedIOTypes().contains(QCA::PKey::RSA)) {
+        QMessageBox::critical(this, "QCA error", "QCA OpenSSL-Plugin not found!\n\nThe application will now quit.");
+        QTimer::singleShot(100, qApp, SLOT(quit()));
+    }
 }
 
 MainWindow::~MainWindow()
 {
-    delete m_qcaInit;
     delete m_messageWindow;
     delete m_contacts;
     delete ui;
@@ -106,9 +100,13 @@ void MainWindow::socket_readyRead()
     case QccPacket::ConnectionAccepted:
     {
         m_privateKey = QCA::KeyGenerator().createRSA(1024);
+        if (m_privateKey.isNull() || !m_privateKey.canDecrypt()) {
+            qWarning("Failed to generate private key");
+            break;
+        }
         QccPacket packet(m_register ? QccPacket::UserRegister : QccPacket::UserAuthentication);
         packet.stream() << ui->usernameLineEdit->text()
-                        << MainWindow::hashString(ui->passwordLineEdit->text())
+                        << QCA::Hash("sha256").hashToString(ui->passwordLineEdit->text().toUtf8())
                         << m_privateKey.toPublicKey().toDER();
         packet.send(&m_socket);
         break;
@@ -233,13 +231,14 @@ void MainWindow::socket_readyRead()
         in >> id >> username >> encryptedMessage;
 
         Contact *contact = m_contacts->contact(username);
-        if (!contact) { // received message from unknown user (not on contact list)
-            contact = new Contact(username);
-            m_contacts->add(contact);
-        }
+        if (!contact) // received message from unknown user (not on contact list)
+            break;
 
         QCA::SecureArray message;
-        m_privateKey.decrypt(encryptedMessage, &message, QCA::EME_PKCS1_OAEP);
+        if (!m_privateKey.decrypt(encryptedMessage, &message, QCA::EME_PKCS1_OAEP)) {
+            qWarning("Error decrypting");
+            break;
+        }
         m_messageWindow->appendMessage(contact, QString(message.toByteArray()));
 
         QccPacket packet(QccPacket::MessageSuccess);

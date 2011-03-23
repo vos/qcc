@@ -25,7 +25,13 @@ void Contact::init()
 
 void Contact::setPublicKey(const QByteArray &publicKey)
 {
-    m_publicKey = QCA::PublicKey::fromDER(publicKey);
+    if (publicKey.isEmpty()) // should only happen if the contact is offline
+        return;
+
+    QCA::ConvertResult conversionResult;
+    m_publicKey = QCA::PublicKey::fromDER(publicKey, &conversionResult);
+    if (conversionResult != QCA::ConvertGood || !m_publicKey.canEncrypt())
+        qWarning("Contact::setPublicKey: not a valid public key");
 }
 
 QIcon Contact::statusIcon() const
@@ -39,7 +45,8 @@ QIcon Contact::statusIcon() const
 
 QByteArray Contact::encrypt(const QString &text)
 {
-    QCA::SecureArray a = m_publicKey.encrypt(text.toAscii(), QCA::EME_PKCS1_OAEP);
-    qDebug("text length = %d", m_publicKey.canEncrypt());
-    return a.toByteArray();
+    QCA::SecureArray result = m_publicKey.encrypt(text.toAscii(), QCA::EME_PKCS1_OAEP);
+    if (result.isEmpty())
+        qWarning("Error encrypting");
+    return result.toByteArray();
 }

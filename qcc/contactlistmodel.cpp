@@ -1,5 +1,4 @@
 #include "contactlistmodel.h"
-
 #include "contact.h"
 
 ContactListModel::ContactListModel(QObject *parent) :
@@ -19,7 +18,7 @@ int ContactListModel::rowCount(const QModelIndex &) const
 
 QVariant ContactListModel::data(const QModelIndex &index, int role) const
 {
-    if (index.row() < 0 || index.row() >= m_contacts.size())
+    if (!index.isValid() || index.row() >= m_contacts.count())
         return QVariant();
 
     if (role == Qt::DisplayRole)
@@ -43,7 +42,7 @@ void ContactListModel::add(Contact *contact)
 
 void ContactListModel::add(const QList<Contact*> &contacts)
 {
-    if (contacts.count() <= 0)
+    if (contacts.count() == 0)
         return;
 
     beginInsertRows(QModelIndex(), m_contacts.count(), m_contacts.count() + contacts.count());
@@ -64,16 +63,15 @@ bool ContactListModel::remove(const Contact *contact)
 bool ContactListModel::remove(const QString &contactName)
 {
     for (int i = 0; i < m_contacts.count(); i++) {
-        if (m_contacts.at(i)->username() == contactName) {
+        if (m_contacts.at(i)->username() == contactName)
             return remove(index(i));
-        }
     }
     return false;
 }
 
 bool ContactListModel::remove(const QModelIndex &index)
 {
-    if (index.row() >= m_contacts.count())
+    if (!index.isValid() || index.row() >= m_contacts.count())
         return false;
 
     beginRemoveRows(QModelIndex(), index.row(), index.row());
@@ -86,7 +84,7 @@ bool ContactListModel::remove(const QModelIndex &index)
 
 void ContactListModel::clear()
 {
-    if (m_contacts.count() <= 0)
+    if (m_contacts.count() == 0)
         return;
 
     beginResetModel();
@@ -106,8 +104,9 @@ Contact* ContactListModel::contact(const QString &contactName)
 
 Contact* ContactListModel::contact(const QModelIndex &index)
 {
-    if (index.row() >= m_contacts.count())
+    if (!index.isValid() || index.row() >= m_contacts.count())
         return NULL;
+
     return m_contacts.at(index.row());
 }
 
@@ -122,6 +121,7 @@ void ContactListModel::contact_statusChanged()
     int listIndex = m_contacts.indexOf(contact);
     if (listIndex < 0)
         return;
+
     QModelIndex modelIndex = index(listIndex);
     dataChanged(modelIndex, modelIndex);
 }

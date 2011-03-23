@@ -6,10 +6,6 @@
 #include <QModelIndex>
 #include <QtCrypto>
 
-QT_BEGIN_NAMESPACE
-class QCryptographicHash;
-QT_BEGIN_NAMESPACE
-
 class ContactListModel;
 class MessageWindow;
 
@@ -43,13 +39,9 @@ private slots:
     void on_addContactButton_clicked();
 
 private:
-    static QCryptographicHash *Hash;
-    static QString hashString(const QString &str);
-
     Ui::MainWindow *ui;
     ContactListModel *m_contacts;
     MessageWindow *m_messageWindow;
-    QCA::Initializer *m_qcaInit;
     QTcpSocket m_socket;
     quint32 m_packetSize;
     bool m_register;

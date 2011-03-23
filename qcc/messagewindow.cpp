@@ -1,6 +1,5 @@
 #include "messagewindow.h"
 #include "ui_messagewindow.h"
-
 #include "contact.h"
 #include "messagepage.h"
 

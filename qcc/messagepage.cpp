@@ -1,10 +1,9 @@
 #include "messagepage.h"
 #include "ui_messagepage.h"
-
-#include <QKeyEvent>
-
 #include "qccpacket.h"
 #include "contact.h"
+
+#include <QKeyEvent>
 
 MessagePage::MessagePage(QWidget *parent) :
     QWidget(parent), ui(new Ui::MessagePage)
@@ -51,7 +50,7 @@ void MessagePage::contact_statusChanged()
 void MessagePage::on_sendButton_clicked()
 {
     QString text = ui->messageTextEdit->toPlainText().trimmed();
-    if (text.isEmpty())
+    if (text.isEmpty() || !m_contact->isOnline())
         return;
 
     QccPacket message;

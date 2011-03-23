@@ -1,5 +1,6 @@
 #include "server.h"
 #include "qccpacket.h"
+#include "user.h"
 
 #include <QTcpSocket>
 #include <QFile>
@@ -9,8 +10,6 @@
 #ifdef DEBUG
 #include <QDebug>
 #endif
-
-#include "user.h"
 
 Server::Server(QObject *parent) :
     QTcpServer(parent)
