@@ -35,10 +35,12 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
     ui->contactListView->setModel(m_contacts);
+    m_qcaInit = new QCA::Initializer;
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_qcaInit;
     delete m_messageWindow;
     delete m_contacts;
     delete ui;
@@ -103,9 +105,11 @@ void MainWindow::socket_readyRead()
     switch ((QccPacket::PacketType)type) {
     case QccPacket::ConnectionAccepted:
     {
+        m_privateKey = QCA::KeyGenerator().createRSA(1024);
         QccPacket packet(m_register ? QccPacket::UserRegister : QccPacket::UserAuthentication);
         packet.stream() << ui->usernameLineEdit->text()
-                        << MainWindow::hashString(ui->passwordLineEdit->text());
+                        << MainWindow::hashString(ui->passwordLineEdit->text())
+                        << m_privateKey.toPublicKey().toDER();
         packet.send(&m_socket);
         break;
     }
@@ -187,8 +191,10 @@ void MainWindow::socket_readyRead()
         for (int i = 0; i < contactCount; i++) {
             QString username;
             qint32 status;
-            in >> username >> status;
+            QByteArray publicKey;
+            in >> username >> status >> publicKey;
             Contact *contact = new Contact(username);
+            contact->setPublicKey(publicKey);
             contact->setStatus((Contact::Status)status);
             contacts.append(contact);
         }
@@ -199,10 +205,13 @@ void MainWindow::socket_readyRead()
     {
         QString username;
         qint32 status;
-        in >> username >> status;
+        QByteArray publicKey;
+        in >> username >> status >> publicKey;
         Contact *contact = m_contacts->contact(username);
-        if (contact)
+        if (contact) {
+            contact->setPublicKey(publicKey);
             contact->setStatus((Contact::Status)status);
+        }
         break;
     }
     case QccPacket::ContactRemoved:
@@ -219,8 +228,9 @@ void MainWindow::socket_readyRead()
     case QccPacket::Message:
     {
         qint32 id;
-        QString username, message;
-        in >> id >> username >> message;
+        QString username;
+        QByteArray encryptedMessage;
+        in >> id >> username >> encryptedMessage;
 
         Contact *contact = m_contacts->contact(username);
         if (!contact) { // received message from unknown user (not on contact list)
@@ -228,7 +238,9 @@ void MainWindow::socket_readyRead()
             m_contacts->add(contact);
         }
 
-        m_messageWindow->appendMessage(contact, message);
+        QCA::SecureArray message;
+        m_privateKey.decrypt(encryptedMessage, &message, QCA::EME_PKCS1_OAEP);
+        m_messageWindow->appendMessage(contact, QString(message.toByteArray()));
 
         QccPacket packet(QccPacket::MessageSuccess);
         packet.stream() << id << username;

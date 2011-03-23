@@ -23,6 +23,11 @@ void Contact::init()
     }
 }
 
+void Contact::setPublicKey(const QByteArray &publicKey)
+{
+    m_publicKey = QCA::PublicKey::fromDER(publicKey);
+}
+
 QIcon Contact::statusIcon() const
 {
     switch (m_status) {
@@ -30,4 +35,11 @@ QIcon Contact::statusIcon() const
     case Online: return Contact::OnlineIcon;
     default: return QIcon();
     }
+}
+
+QByteArray Contact::encrypt(const QString &text)
+{
+    QCA::SecureArray a = m_publicKey.encrypt(text.toAscii(), QCA::EME_PKCS1_OAEP);
+    qDebug("text length = %d", m_publicKey.canEncrypt());
+    return a.toByteArray();
 }

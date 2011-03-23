@@ -171,7 +171,8 @@ void Server::client_readyRead()
     case QccPacket::UserRegister:
     {
         QString username, password;
-        in >> username >> password;
+        QByteArray publicKey;
+        in >> username >> password >> publicKey;
 #ifdef DEBUG
         qDebug("Username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
@@ -199,6 +200,7 @@ void Server::client_readyRead()
             qDebug("RegisterSuccess");
 #endif
         User *user = new User(username, password);
+        user->setPublicKey(publicKey);
         user->setSocket(socket);
         connect(user, SIGNAL(statusChanged()), SLOT(client_statusChanged()));
         user->setStatus(User::Online);
@@ -211,7 +213,8 @@ void Server::client_readyRead()
     case QccPacket::UserAuthentication:
     {
         QString username, password;
-        in >> username >> password;
+        QByteArray publicKey;
+        in >> username >> password >> publicKey;
 #ifdef DEBUG
         qDebug("Username = '%s' password = '%s'", qPrintable(username), qPrintable(password));
 #endif
@@ -220,8 +223,9 @@ void Server::client_readyRead()
 #ifdef DEBUG
             qDebug("AuthenticationSuccess");
 #endif
-            user->setStatus(User::Online);
+            user->setPublicKey(publicKey);
             user->setSocket(socket);
+            user->setStatus(User::Online);
             client->user = user;
             QccPacket(QccPacket::AuthenticationSuccess).send(socket);
         } else {
@@ -321,7 +325,8 @@ void Server::client_readyRead()
         packet.stream() << (qint32)contacts.count();
         foreach (const QString &contactName, contacts) {
             User *contact = m_users.value(contactName);
-            packet.stream() << contactName << qint32(contact ? contact->status() : User::Offline);
+            if (!contact) continue;
+            packet.stream() << contactName << qint32(contact->status()) << contact->publicKey();
         }
         packet.send(socket);
 #ifdef DEBUG
@@ -417,7 +422,7 @@ void Server::client_statusChanged()
 
     // inform all online users that have this user on their contact list of the status change
     QccPacket packet(QccPacket::ContactStatusChanged);
-    packet.stream() << user->username() << (qint32)user->status();
+    packet.stream() << user->username() << (qint32)user->status() << user->publicKey();
     foreach (Client *client, m_clients.values()) {
         if (client->user == NULL)
             continue;

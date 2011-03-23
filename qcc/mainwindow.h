@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTcpSocket>
 #include <QModelIndex>
+#include <QtCrypto>
 
 QT_BEGIN_NAMESPACE
 class QCryptographicHash;
@@ -48,9 +49,12 @@ private:
     Ui::MainWindow *ui;
     ContactListModel *m_contacts;
     MessageWindow *m_messageWindow;
+    QCA::Initializer *m_qcaInit;
     QTcpSocket m_socket;
     quint32 m_packetSize;
     bool m_register;
+
+    QCA::PrivateKey m_privateKey;
 
     void closeEvent(QCloseEvent *);
 };

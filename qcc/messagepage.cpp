@@ -54,12 +54,12 @@ void MessagePage::on_sendButton_clicked()
     if (text.isEmpty())
         return;
 
+    QccPacket message;
+    message.stream() << qint32(qrand()) << m_contact->username() << m_contact->encrypt(text);
+    message.send(m_socket);
+
     text.replace('\n', "<br/>");
     ui->messagesTextEdit->append("<span style=\"color: #00f;\">You</span>: " + text);
-
-    QccPacket message;
-    message.stream() << qint32(qrand()) << m_contact->username() << text;
-    message.send(m_socket);
 
     ui->messageTextEdit->clear();
     ui->messageTextEdit->setFocus();

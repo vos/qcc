@@ -14,10 +14,10 @@ public:
     enum PacketType {
         ConnectionAccepted,
         ConnectionRefused,
-        UserRegister,          // QString(username), QString(passwort|SHA-1)
+        UserRegister,          // QString(username), QString(passwort|SHA-1), QByteArray(publickey)
         RegisterSuccess,
         RegisterFailure,       // QString(reason)
-        UserAuthentication,    // QString(username), QString(passwort|SHA-1)
+        UserAuthentication,    // QString(username), QString(passwort|SHA-1), QByteArray(publickey)
         AuthenticationSuccess,
         AuthenticationFailure, // QString(reason)
         RequestAuthorization,  // QString(username)
@@ -25,8 +25,8 @@ public:
         AuthorizationDeclined, // QString(username)
         AuthorizationFailure,  // QString(reason)
         RequestContactList,
-        ContactList,           // qint32(count), QString(username), qint32(status), QString(username), qint32(status), ...
-        ContactStatusChanged,  // QString(username), qint32(status)
+        ContactList,           // qint32(count), QString(username), qint32(status), QByteArray(publicKey), QString(username), qint32(status), QByteArray(publicKey), ...
+        ContactStatusChanged,  // QString(username), qint32(status), QByteArray(publicKey)
         RemoveContact,         // QString(username)
         ContactRemoved,        // QString(username)
         Message,               // qint32(message-id), QString(receiver|sender), QString(message)
