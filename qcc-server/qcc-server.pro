@@ -28,3 +28,5 @@ HEADERS += server.h \
 SOURCES += main.cpp \
            server.cpp \
            user.cpp
+
+OTHER_FILES += ../README.md

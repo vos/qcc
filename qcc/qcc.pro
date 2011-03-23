@@ -39,3 +39,5 @@ FORMS += mainwindow.ui \
          messagepage.ui
 
 RESOURCES += icons.qrc
+
+OTHER_FILES += ../README.md

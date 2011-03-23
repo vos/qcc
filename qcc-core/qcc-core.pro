@@ -15,3 +15,5 @@ HEADERS += qccpacket.h \
 
 SOURCES += qccpacket.cpp \
            abstractuser.cpp
+
+OTHER_FILES += ../README.md
