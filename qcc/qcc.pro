@@ -22,6 +22,7 @@ INCLUDEPATH += ../qcc-core
 LIBS += -L$$QCC_PREFIX -lqcc-core
 
 HEADERS += mainwindow.h \
+           registerdialog.h \
            messagewindow.h \
            messagepage.h \
            contact.h \
@@ -29,12 +30,14 @@ HEADERS += mainwindow.h \
 
 SOURCES += main.cpp \
            mainwindow.cpp \
+           registerdialog.cpp \
            messagewindow.cpp \
            messagepage.cpp \
            contact.cpp \
            contactlistmodel.cpp
 
 FORMS += mainwindow.ui \
+         registerdialog.ui \
          messagewindow.ui \
          messagepage.ui
 

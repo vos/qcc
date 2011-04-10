@@ -4,6 +4,7 @@
 #include "contact.h"
 #include "contactlistmodel.h"
 #include "messagewindow.h"
+#include "registerdialog.h"
 
 #include <QMessageBox>
 #include <QMenu>
@@ -117,6 +118,7 @@ void MainWindow::socket_readyRead()
     case QccPacket::RegisterSuccess:
         QMessageBox::information(this, "Register Success", "You are now registered.");
         ui->stackedWidget->setCurrentIndex(1);
+        setWindowTitle("QCC - " + ui->usernameLineEdit->text());
         break;
     case QccPacket::RegisterFailure:
     {
@@ -129,6 +131,7 @@ void MainWindow::socket_readyRead()
     case QccPacket::AuthenticationSuccess:
         QccPacket(QccPacket::RequestContactList).send(&m_socket);
         ui->stackedWidget->setCurrentIndex(1);
+        setWindowTitle("QCC - " + ui->usernameLineEdit->text());
         break;
     case QccPacket::AuthenticationFailure:
     {
@@ -296,8 +299,14 @@ void MainWindow::on_loginButton_clicked()
 
 void MainWindow::on_registerButton_clicked()
 {
-    m_register = true;
-    connectToHost();
+    RegisterDialog dialog(this);
+    dialog.exec();
+    if (dialog.result()) {
+        ui->usernameLineEdit->setText(dialog.username());
+        ui->passwordLineEdit->setText(dialog.password());
+        m_register = true;
+        connectToHost();
+    }
 }
 
 void MainWindow::on_contactListView_activated(const QModelIndex &index)

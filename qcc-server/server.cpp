@@ -252,6 +252,16 @@ void Server::client_readyRead()
 #endif
             break;
         }
+        if (client->user->username() == username) {
+            QString reason = QString("You cannot add yourself.");
+            QccPacket packet(QccPacket::AuthorizationFailure);
+            packet.stream() << reason;
+            packet.send(socket);
+#ifdef DEBUG
+            qDebug("AuthorizationFailure: %s", qPrintable(reason));
+#endif
+            break;
+        }
         if (client->user->containsContact(username)) {
             QString reason = QString("The user \"%1\" is already on your contact list.").arg(username);
             QccPacket packet(QccPacket::AuthorizationFailure);
