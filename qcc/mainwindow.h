@@ -39,6 +39,8 @@ private slots:
     void on_addContactButton_clicked();
 
 private:
+    static const quint16 DEFAULT_PORT = 54321;
+
     Ui::MainWindow *ui;
     ContactListModel *m_contacts;
     MessageWindow *m_messageWindow;

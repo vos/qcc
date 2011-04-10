@@ -7,7 +7,7 @@
 
 #include "server.h"
 
-const quint16 DEFAULT_PORT = 12345;
+const quint16 DEFAULT_PORT = 54321;
 
 // helper function for reading a command line argument of type quint16
 quint16 readShort(const QStringList &arguments, const QString &name, quint16 defaultValue = 0)

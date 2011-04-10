@@ -46,8 +46,16 @@ void MainWindow::connectToHost()
     if (m_socket.state() > 0)
         return;
 
+    QStringList server = ui->serverLineEdit->text().split(':');
+    QString host = server.at(0);
+    quint16 port = server.length() < 2 ? MainWindow::DEFAULT_PORT : server.at(1).toUShort();
+    if (port <= 0 || port >= 65536)
+        port = MainWindow::DEFAULT_PORT;
+
+    //qDebug("server = %s:%d", qPrintable(host), port);
+
     m_packetSize = 0;
-    m_socket.connectToHost(ui->serverLineEdit->text(), 12345);
+    m_socket.connectToHost(host, port);
     ui->loginButton->setEnabled(false);
     ui->registerButton->setEnabled(false);
 }
