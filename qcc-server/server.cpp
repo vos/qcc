@@ -287,13 +287,17 @@ void Server::client_readyRead()
         in >> username;
         if (username.isEmpty())
             break;
-        User *receiver = m_users.value(username);
+        User *receiver = m_users[username];
         if (receiver && receiver->isOnline()) {
             receiver->addContact(client->user->username());
+            client->user->addContact(username);
             saveUsers();
             QccPacket packet(QccPacket::AuthorizationAccepted);
-            packet.stream() << client->user->username() << (qint32)client->user->status();
+            packet.stream() << client->user->username() << (qint32)client->user->status() << client->user->publicKey();
             packet.send(receiver->socket());
+            QccPacket packet2(QccPacket::AuthorizationAccepted);
+            packet2.stream() << username << (qint32)receiver->status() << receiver->publicKey();
+            packet2.send(socket);
         }
 #ifdef DEBUG
             qDebug("AuthorizationAccepted: forwarded to '%s'", qPrintable(username));
@@ -338,10 +342,16 @@ void Server::client_readyRead()
         QString username;
         in >> username;
         if (client->user->removeContact(username)) {
-            saveUsers();
             QccPacket packet(QccPacket::ContactRemoved);
             packet.stream() << username;
             packet.send(socket);
+            User *receiver = m_users[username];
+            if (receiver && receiver->isOnline() && receiver->removeContact(client->user->username())) {
+                QccPacket packet2(QccPacket::ContactRemoved);
+                packet2.stream() << client->user->username();
+                packet2.send(receiver->socket());
+            }
+            saveUsers();
 #ifdef DEBUG
             qDebug("ContactRemoved: contact '%s' removed", qPrintable(username));
 #endif

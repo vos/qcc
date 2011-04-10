@@ -21,11 +21,11 @@ public:
         AuthenticationSuccess,
         AuthenticationFailure, // QString(reason)
         RequestAuthorization,  // QString(username)
-        AuthorizationAccepted, // QString(username), [qint32(status)|client]
+        AuthorizationAccepted, // QString(username), [qint32(status)|client], [QByteArray(publickey)|client]
         AuthorizationDeclined, // QString(username)
         AuthorizationFailure,  // QString(reason)
         RequestContactList,
-        ContactList,           // qint32(count), QString(username), qint32(status), QByteArray(publicKey), QString(username), qint32(status), QByteArray(publicKey), ...
+        ContactList,           // qint32(count), QString(username), qint32(status), QByteArray(publicKey), ...
         ContactStatusChanged,  // QString(username), qint32(status), QByteArray(publicKey)
         RemoveContact,         // QString(username)
         ContactRemoved,        // QString(username)

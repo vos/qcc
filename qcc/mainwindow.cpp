@@ -157,12 +157,14 @@ void MainWindow::socket_readyRead()
     {
         QString username;
         qint32 status;
-        in >> username >> status;
+        QByteArray publicKey;
+        in >> username >> status >> publicKey;
         Contact *contact = m_contacts->contact(username);
         if (!contact) {
             contact = new Contact(username);
             m_contacts->add(contact);
         }
+        contact->setPublicKey(publicKey);
         contact->setStatus((Contact::Status)status);
         break;
     }
