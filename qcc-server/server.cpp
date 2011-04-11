@@ -11,6 +11,8 @@
 #include <QDebug>
 #endif
 
+const QString Server::USERS_FILE = "users.xml";
+
 Server::Server(QObject *parent) :
     QTcpServer(parent)
 {
@@ -19,8 +21,8 @@ Server::Server(QObject *parent) :
 
 Server::~Server()
 {
-    qDeleteAll(m_users.values());
     qDeleteAll(m_clients.values());
+    qDeleteAll(m_users.values());
 }
 
 void Server::loadUsers()
@@ -29,7 +31,7 @@ void Server::loadUsers()
     qDebug("Server::loadUsers()");
 #endif
 
-    QFile file("users.xml");
+    QFile file(Server::USERS_FILE);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning("Server::loadUsers(): cannot read file users.xml => %s", qPrintable(file.errorString()));
         return;
@@ -67,7 +69,7 @@ void Server::saveUsers()
     qDebug("Server::saveUsers()");
 #endif
 
-    QFile file("users.xml");
+    QFile file(Server::USERS_FILE);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning("Server::saveUsers(): cannot write file users.xml => %s", qPrintable(file.errorString()));
         return;

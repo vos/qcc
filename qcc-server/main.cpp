@@ -20,7 +20,7 @@ quint16 readShort(const QStringList &arguments, const QString &name, quint16 def
         return defaultValue;
 
     bool ok;
-    quint16 value = arguments.at(index + 1).toShort(&ok);
+    quint16 value = arguments.at(index + 1).toUShort(&ok);
     return ok ? value : defaultValue;
 }
 

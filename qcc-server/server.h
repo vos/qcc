@@ -17,8 +17,6 @@ public:
     void loadUsers();
     void saveUsers();
 
-signals:
-
 private slots:
     void client_disconnected();
     void client_readyRead();
@@ -26,10 +24,12 @@ private slots:
 
 private:
     struct Client {
-        Client(User *u = NULL) : packetSize(0), user(u) { }
+        explicit inline Client(User *u = NULL) : packetSize(0), user(u) { }
         quint32 packetSize;
         User *user;
     };
+
+    static const QString USERS_FILE;
 
     QHash<QString, User*> m_users;
     QHash<QTcpSocket*, Client*> m_clients;
