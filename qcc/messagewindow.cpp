@@ -60,6 +60,13 @@ void MessageWindow::closeTab(Contact *contact)
     }
 }
 
+void MessageWindow::closeAllTabs()
+{
+    clear();
+    qDeleteAll(m_pages.values());
+    m_pages.clear();
+}
+
 void MessageWindow::appendMessage(Contact *contact, const QString &message)
 {
     if (!contact)
@@ -95,7 +102,7 @@ void MessageWindow::tabCloseRequested(int index)
     }
 
     m_pages.remove(page->contact());
-    QTabWidget::removeTab(index);
+    removeTab(index);
     disconnect(page->contact(), SIGNAL(statusChanged()), this, SLOT(contact_statusChanged()));
     delete page;
 

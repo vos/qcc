@@ -75,6 +75,8 @@ void MainWindow::socket_disconnected()
 
     ui->stackedWidget->setCurrentIndex(0);
     setWindowTitle("QCC");
+    m_messageWindow->closeAllTabs();
+    m_messageWindow->close();
     ui->loginButton->setEnabled(true);
     ui->registerButton->setEnabled(true);
 }

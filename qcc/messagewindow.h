@@ -25,6 +25,7 @@ public:
 
     bool addTab(Contact *contact);
     void closeTab(Contact *contact);
+    void closeAllTabs();
     void appendMessage(Contact *contact, const QString &message);
 
 private slots:

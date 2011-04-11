@@ -10,16 +10,18 @@ TARGET = qcc
 TEMPLATE = app
 CONFIG += link_prl crypto
 
+QCC_CORE_PREFIX = ../qcc-core-build-desktop
+
 CONFIG(debug, debug|release) {
     DEFINES += DEBUG
-    QCC_PREFIX = ../qcc-core-build-desktop/debug
+    win32:QCC_CORE_PREFIX = $$QCC_CORE_PREFIX/debug
 } else {
     DEFINES += RELEASE
-    QCC_PREFIX = ../qcc-core-build-desktop/release
+    win32:QCC_CORE_PREFIX = $$QCC_CORE_PREFIX/release
 }
 
 INCLUDEPATH += ../qcc-core
-LIBS += -L$$QCC_PREFIX -lqcc-core
+LIBS += -L$$QCC_CORE_PREFIX -lqcc-core
 
 HEADERS += mainwindow.h \
            registerdialog.h \
