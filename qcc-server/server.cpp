@@ -356,7 +356,7 @@ void Server::client_readyRead()
             packet.stream() << username;
             packet.send(socket);
             User *receiver = m_users[username];
-            if (receiver && receiver->isOnline() && receiver->removeContact(client->user->username())) {
+            if (receiver && receiver->removeContact(client->user->username()) && receiver->isOnline()) {
                 QccPacket packet2(QccPacket::ContactRemoved);
                 packet2.stream() << client->user->username();
                 packet2.send(receiver->socket());
@@ -374,16 +374,16 @@ void Server::client_readyRead()
         QString receiverName;
         QString message;
         in >> id >> receiverName >> message;
-//        if (!client->user->containsContact(receiverName)) {
-//            QString reason = QString("The user \"%1\" is not on your contact list.").arg(receiverName);
-//            QccPacket packet(QccPacket::MessageFailure);
-//            packet.stream() << reason;
-//            packet.send(socket);
-//#ifdef DEBUG
-//            qDebug("MessageFailure: %s", qPrintable(reason));
-//#endif
-//            break;
-//        }
+        if (!client->user->containsContact(receiverName)) {
+            QString reason = QString("The user \"%1\" is not on your contact list.").arg(receiverName);
+            QccPacket packet(QccPacket::MessageFailure);
+            packet.stream() << reason;
+            packet.send(socket);
+#ifdef DEBUG
+            qDebug("MessageFailure: %s", qPrintable(reason));
+#endif
+            break;
+        }
         User *receiver = m_users.value(receiverName);
         if (receiver && receiver->isOnline()) {
             QccPacket packet(QccPacket::Message);

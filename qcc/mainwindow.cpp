@@ -327,7 +327,9 @@ void MainWindow::on_contactListView_activated(const QModelIndex &index)
 void MainWindow::on_contactListView_customContextMenuRequested(const QPoint &pos)
 {
     Contact *contact = m_contacts->contact(ui->contactListView->currentIndex());
-    if (!contact) return;
+    if (!contact)
+        return;
+
     QMenu menu(ui->contactListView);
     menu.addAction("Remove contact \"" + contact->username() + "\"", this, SLOT(removeCurrentContact(bool)));
     menu.exec(ui->contactListView->mapToGlobal(pos));
@@ -352,9 +354,15 @@ void MainWindow::removeCurrentContact(bool)
     if (!contact || !contact->isValid())
         return;
 
-    QccPacket packet(QccPacket::RemoveContact);
-    packet.stream() << contact->username();
-    packet.send(&m_socket);
+    int question = QMessageBox::question(this, "Remove contact", "Do you really want to remove the contact \"" +
+                                         contact->username() + "\" from your contact list?",
+                                         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+    if (question == QMessageBox::Yes) {
+        QccPacket packet(QccPacket::RemoveContact);
+        packet.stream() << contact->username();
+        packet.send(&m_socket);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *)
