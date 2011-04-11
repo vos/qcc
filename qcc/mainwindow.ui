@@ -52,7 +52,7 @@
         <item row="3" column="0" colspan="2">
          <widget class="QLineEdit" name="usernameLineEdit">
           <property name="text">
-           <string notr="true">vos</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>
@@ -66,7 +66,7 @@
         <item row="5" column="0" colspan="2">
          <widget class="QLineEdit" name="passwordLineEdit">
           <property name="text">
-           <string notr="true">test</string>
+           <string notr="true"/>
           </property>
           <property name="echoMode">
            <enum>QLineEdit::Password</enum>
@@ -156,5 +156,38 @@
   <tabstop>addContactButton</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>usernameLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>loginButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>86</x>
+     <y>82</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>46</x>
+     <y>155</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>passwordLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>loginButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>86</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>46</x>
+     <y>155</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

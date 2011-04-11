@@ -29,13 +29,19 @@ void RegisterDialog::on_buttonBox_accepted()
 {
     QString username = ui->usernameLineEdit->text();
     if (username.isEmpty() || username.length() < 3) {
-        QMessageBox::warning(this, "Username error", "The username must be at least 3 characters.");
+        QMessageBox::warning(this, "Username error", "The username must be at least 3 characters long.");
         return;
     }
+
     QString password = ui->password1LineEdit->text();
-    if (password.isEmpty() || password != ui->password2LineEdit->text()) {
+    if (password.isEmpty() || password.length() < 3) {
+        QMessageBox::warning(this, "Password error", "The password must be at least 3 characters long.");
+        return;
+    }
+    if (password != ui->password2LineEdit->text()) {
         QMessageBox::warning(this, "Password error", "The passwords do not match.");
         return;
     }
+
     accept();
 }

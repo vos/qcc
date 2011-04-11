@@ -49,9 +49,6 @@ void MainWindow::connectToHost()
     QStringList server = ui->serverLineEdit->text().split(':');
     QString host = server.at(0);
     quint16 port = server.length() < 2 ? MainWindow::DEFAULT_PORT : server.at(1).toUShort();
-    if (port <= 0 || port >= 65536)
-        port = MainWindow::DEFAULT_PORT;
-
     //qDebug("server = %s:%d", qPrintable(host), port);
 
     m_packetSize = 0;
@@ -77,6 +74,7 @@ void MainWindow::socket_disconnected()
         return;
 
     ui->stackedWidget->setCurrentIndex(0);
+    setWindowTitle("QCC");
     ui->loginButton->setEnabled(true);
     ui->registerButton->setEnabled(true);
 }
@@ -124,7 +122,8 @@ void MainWindow::socket_readyRead()
         QMessageBox::critical(this, "Connection Refused", "Access denied!");
         break;
     case QccPacket::RegisterSuccess:
-        QMessageBox::information(this, "Register Success", "You are now registered.");
+        QMessageBox::information(this, "Register Success", "Your registration has been successful.\n"
+                                 "You will now be logged in...");
         ui->stackedWidget->setCurrentIndex(1);
         setWindowTitle("QCC - " + ui->usernameLineEdit->text());
         break;
@@ -288,6 +287,8 @@ void MainWindow::socket_error(QAbstractSocket::SocketError error)
     qDebug("MainWindow::socket_error(%i) => %s", error, qPrintable(m_socket.errorString()));
 #endif
 
+    QMessageBox::critical(this, "Connection Error", m_socket.errorString());
+
     ui->loginButton->setEnabled(true);
     ui->registerButton->setEnabled(true);
 }
@@ -320,7 +321,9 @@ void MainWindow::on_registerButton_clicked()
 void MainWindow::on_contactListView_activated(const QModelIndex &index)
 {
     Contact *contact = m_contacts->contact(index);
-    if (!contact) return;
+    if (!contact)
+        return;
+
     m_messageWindow->addTab(contact);
 }
 
