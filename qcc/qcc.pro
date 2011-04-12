@@ -45,4 +45,7 @@ FORMS += mainwindow.ui \
 
 RESOURCES += icons.qrc
 
-OTHER_FILES += ../README.md
+win32:RC_FILE = qcc.rc
+
+OTHER_FILES += ../README.md \
+               qcc.rc

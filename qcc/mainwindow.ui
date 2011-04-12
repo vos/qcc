@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>174</width>
-    <height>320</height>
+    <height>318</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,6 +78,12 @@
           <property name="text">
            <string>Login</string>
           </property>
+          <property name="autoDefault">
+           <bool>true</bool>
+          </property>
+          <property name="default">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item row="6" column="1">
@@ -86,6 +92,33 @@
            <string>Register</string>
           </property>
          </widget>
+        </item>
+        <item row="7" column="0" colspan="2">
+         <layout class="QVBoxLayout" name="logoLayout">
+          <item>
+           <spacer name="logoSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>99999</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="logoLabel">
+            <property name="pixmap">
+             <pixmap resource="icons.qrc">:/icons/qcc128a.png</pixmap>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -155,7 +188,9 @@
   <tabstop>contactLineEdit</tabstop>
   <tabstop>addContactButton</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>usernameLineEdit</sender>
