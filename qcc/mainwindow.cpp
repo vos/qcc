@@ -248,10 +248,15 @@ void MainWindow::socket_readyRead()
         if (!contact) // received message from unknown user (not on contact list)
             break;
 
+        const int keySize = m_privateKey.bitSize() / 8;
         QCA::SecureArray message;
-        if (!m_privateKey.decrypt(encryptedMessage, &message, QCA::EME_PKCS1_OAEP)) {
-            qWarning("Error decrypting");
-            break;
+        for (int i = 0; i < encryptedMessage.length() / keySize; i++) {
+            QCA::SecureArray messageBlock;
+            if (!m_privateKey.decrypt(encryptedMessage.mid(i * keySize, keySize), &messageBlock, QCA::EME_PKCS1_OAEP)) {
+                qWarning("Error decrypting");
+                return;
+            }
+            message.append(messageBlock);
         }
         m_messageWindow->appendMessage(contact, QString(message.toByteArray()));
 
