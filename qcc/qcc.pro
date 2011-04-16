@@ -10,7 +10,7 @@ TARGET = qcc
 TEMPLATE = app
 CONFIG += link_prl crypto
 
-QCC_CORE_PREFIX = ../qcc-core-build-desktop
+QCC_CORE_PREFIX = ../qcc-core
 
 CONFIG(debug, debug|release) {
     DEFINES += DEBUG
@@ -47,5 +47,4 @@ RESOURCES += icons.qrc
 
 win32:RC_FILE = qcc.rc
 
-OTHER_FILES += ../README.md \
-               qcc.rc
+OTHER_FILES += qcc.rc

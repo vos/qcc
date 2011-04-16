@@ -11,7 +11,7 @@ TEMPLATE = app
 CONFIG += console link_prl
 CONFIG -= app_bundle
 
-QCC_CORE_PREFIX = ../qcc-core-build-desktop
+QCC_CORE_PREFIX = ../qcc-core
 
 CONFIG(debug, debug|release) {
     DEFINES += DEBUG
@@ -30,5 +30,3 @@ HEADERS += server.h \
 SOURCES += main.cpp \
            server.cpp \
            user.cpp
-
-OTHER_FILES += ../README.md
