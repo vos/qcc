@@ -68,6 +68,6 @@ bool QccPacket::send(QTcpSocket *socket)
 
     m_stream.device()->seek(0);
     m_stream << (quint32)size();
-    socket->write(m_data);
-    return true;
+
+    return socket->write(m_data) == m_data.size();
 }
