@@ -29,10 +29,29 @@
 
 #include "server.h"
 
+/*!
+  \defgroup server QCC server module
+
+  The QCC-server manages all registered users and observes
+  the package transfer between all connected clients.
+ */
+
+//! The default network port, on which the server will listen.
+/*!
+  \ingroup server
+ */
 const quint16 DEFAULT_PORT = 54321;
 
-// helper function for reading a command line argument of type quint16
-quint16 readShort(const QStringList &arguments, const QString &name, quint16 defaultValue = 0)
+//! Helper function for reading a command line argument of type \c quint16.
+/*!
+  \param arguments The list of command-line arguments.
+  \param name The name of the agument.
+  \param defaultValue The default value for the argument, in case there
+                      is none or an error occurred while processing it.
+  \return The value of the argument interpreted as an \c quint16 or the \a defaultValue.
+  \ingroup server
+ */
+quint16 readUShort(const QStringList &arguments, const QString &name, quint16 defaultValue = 0)
 {
     if (arguments.isEmpty())
         return defaultValue;
@@ -46,6 +65,13 @@ quint16 readShort(const QStringList &arguments, const QString &name, quint16 def
     return ok ? value : defaultValue;
 }
 
+//! The main entry point of this application.
+/*!
+  \param argc The command-line argument count.
+  \param argv The command-line argument-array.
+  \return The return code of the application
+  \ingroup server
+ */
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
@@ -56,7 +82,7 @@ int main(int argc, char *argv[])
 #endif
 
     QHostAddress adress = QHostAddress::Any;
-    quint16 port = readShort(arguments, "-port", DEFAULT_PORT);
+    quint16 port = readUShort(arguments, "-port", DEFAULT_PORT);
 
     Server server;
     if (server.listen(adress, port)) {
