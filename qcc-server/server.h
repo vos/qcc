@@ -88,7 +88,7 @@ private slots:
 
 private:
 
-    //! The internal Client struct provides a this wrapper for a User-object and the packet size.
+    //! The internal Client struct provides a thin wrapper for a User-object and the packet size.
     struct Client {
 
         //! Constructs a Client object with the packet size set to \c 0.
