@@ -33,7 +33,7 @@
   \defgroup server QCC server module
 
   The QCC-server manages all registered users and observes
-  the package transfer between all connected clients.
+  the package transfer between all connected \ref client "clients".
  */
 
 //! The default network port, on which the server will listen.
