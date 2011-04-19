@@ -23,6 +23,20 @@
 #include <QtGui/QApplication>
 #include "mainwindow.h"
 
+/*!
+  \defgroup client QCC client module
+
+  The QCC-client can connect to a \ref server "QCC-server" to send and receive instant
+  messages from other QCC-clients and also see their online status.
+ */
+
+//! The main entry point of this application.
+/*!
+  \param argc The command-line argument count.
+  \param argv The command-line argument-array.
+  \return The return code of the application
+  \ingroup client
+ */
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);

@@ -33,32 +33,84 @@ QT_BEGIN_NAMESPACE
 class Contact;
 class MessagePage;
 
+//! The UI namespace.
 namespace Ui {
     class MessageWindow;
 }
 
+//! The MessageWindow class defines the tabbed message window.
+/*!
+  \ingroup client
+ */
 class MessageWindow : public QTabWidget
 {
     Q_OBJECT
 
 public:
+
+    //! Constructs a MessageWindow.
+    /*!
+      \param socket The TCP-socket to the server.
+      \param parent The parent object.
+     */
     explicit MessageWindow(QTcpSocket *socket, QWidget *parent = 0);
+
+    //! Destroys the MessageWindow.
     ~MessageWindow();
 
+    //! Adds a tab to the window.
+    /*!
+      \param contact The contact for the tab.
+      \return \c True if a new tab has been added; otherwise returns \c false.
+      \note If a tab for the contact already exists, the existing tab gets the focus.
+      \sa closeTab(), appendMessage()
+     */
     bool addTab(Contact *contact);
+
+    //! Closes the tab for the \a contact (if any).
+    /*!
+      \param contact The contact of the tab that will be closed.
+      \sa addTab(), closeAllTabs()
+     */
     void closeTab(Contact *contact);
+
+    //! Closes all tabs.
+    /*!
+      \sa closeTab()
+     */
     void closeAllTabs();
+
+    //! Appends a \a message to the tab of the given \a contact.
+    /*!
+      \param contact The sender of the message.
+      \param message The message to append.
+      \note If there is no tab for the \a contact, one will be created.
+      \sa addTab()
+     */
     void appendMessage(Contact *contact, const QString &message);
 
 private slots:
+
+    //! This slot should be called from a \a contact whenever the status changes.
     void contact_statusChanged();
+
+    //! Removes the tab with the given \a index.
+    /*!
+      \param index The index of the tab to remove.
+     */
     void tabCloseRequested(int index);
+
+    //! Closes the current tab.
+    /*!
+      \sa QTabWidget::currentIndex()
+     */
     void page_closeButtonClicked();
 
 private:
-    Ui::MessageWindow *ui;
-    QTcpSocket *m_socket;
-    QHash<Contact*, MessagePage*> m_pages;
+
+    Ui::MessageWindow *ui;                 //!< Pointer to the UI.
+    QTcpSocket *m_socket;                  //!< The TCP-socket to the server.
+    QHash<Contact*, MessagePage*> m_pages; //!< A set of the contacts for all open tabs.
 };
 
 #endif // MESSAGEWINDOW_H

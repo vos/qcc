@@ -30,40 +30,79 @@ QT_BEGIN_NAMESPACE
 class QTcpSocket;
 QT_BEGIN_NAMESPACE
 
+//! The UI namespace.
 namespace Ui {
     class MessagePage;
 }
 
 class Contact;
 
+//! The MessagePage class defines one tab of the MessageWindow.
+/*!
+  \ingroup client
+ */
 class MessagePage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit MessagePage(QWidget *parent = 0);
+
+    //! Constructs a MessagePage.
+    /*!
+      \param socket The TCP-socket to the server.
+      \param contact The contact associated with this page.
+      \param parent The parent object.
+     */
     MessagePage(QTcpSocket *socket, Contact *contact, QWidget *parent = 0);
+
+    //! Destroys the MessagePage.
     ~MessagePage();
 
+    //! Returns the contact of this page.
+    /*!
+      \return The contact of this page.
+     */
     inline Contact* contact() { return m_contact; }
+
+    //! Appends a \a message to this page.
+    /*!
+      \param message The message to append.
+      \param color The color for the \a message.
+      \sa MessageWindow::appendMessage()
+     */
     void appendMessage(const QString &message, const QColor &color = Qt::black);
 
 signals:
+
+    //! This signal is emitted whenever the close button of this page is clicked.
     void closeButtonClicked();
 
 public slots:
+
+    //! Sets the focus on the input field of this page.
     void setFocusOnInput();
 
 private slots:
+
+    //! Sends the \a message from the input field to the server.
     void on_sendButton_clicked();
+
+    //! Prints a status changed text to the chat field.
     void contact_statusChanged();
 
 private:
-    Ui::MessagePage *ui;
-    QTcpSocket *m_socket;
-    Contact *m_contact;
 
-    void initialize();
+    Ui::MessagePage *ui;  //!< Pointer to the UI.
+    QTcpSocket *m_socket; //!< The TCP-socket to the server.
+    Contact *m_contact;   //!< Pointer to the contact of this page.
+
+    //! Filters key events for the input edit to send messages via the \c Return and \c Enter key.
+    /*!
+      \param obj The object to be filtered.
+      \param event The event that occured.
+      \return \c True to forward this event; otherwise returns \c false.
+      \sa QObject::eventFilter()
+     */
     bool eventFilter(QObject *obj, QEvent *event);
 };
 

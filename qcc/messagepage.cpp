@@ -27,19 +27,8 @@
 
 #include <QKeyEvent>
 
-MessagePage::MessagePage(QWidget *parent) :
-    QWidget(parent), ui(new Ui::MessagePage)
-{
-    initialize();
-}
-
 MessagePage::MessagePage(QTcpSocket *socket, Contact *contact, QWidget *parent) :
     QWidget(parent), ui(new Ui::MessagePage), m_socket(socket), m_contact(contact)
-{
-    initialize();
-}
-
-void MessagePage::initialize()
 {
     Q_ASSERT(m_contact); // should never happen, just in case...
 

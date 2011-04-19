@@ -25,26 +25,50 @@
 
 #include <QDialog>
 
+//! The UI namespace.
 namespace Ui {
     class RegisterDialog;
 }
 
+//! The RegisterDialog class defines the register window.
+/*!
+  \ingroup client
+ */
 class RegisterDialog : public QDialog
 {
     Q_OBJECT
 
 public:
+
+    //! Constructs a RegisterDialog.
+    /*!
+      \param parent The parent object.
+     */
     explicit RegisterDialog(QWidget *parent = 0);
+
+    //! Destroys the RegisterDialog.
     ~RegisterDialog();
 
+    //! Returns the username.
+    /*!
+      \return The username.
+     */
     QString username() const;
+
+    //! Returns the password.
+    /*!
+      \return The password.
+     */
     QString password() const;
 
 private slots:
+
+    //! Checks if the username and password is valid and closes the window.
     void on_buttonBox_accepted();
 
 private:
-    Ui::RegisterDialog *ui;
+
+    Ui::RegisterDialog *ui; //!< Pointer to the UI.
 };
 
 #endif // REGISTERDIALOG_H
