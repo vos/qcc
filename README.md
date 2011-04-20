@@ -45,7 +45,7 @@ If you don't supply any port, the default port **54321** is used automatically.
 
 ## License
 
-Copyright © 2011 Alexander Vos, Kai Wellmann.
+Copyright (C) 2011 Alexander Vos, Kai Wellmann.
 
 Distributed under the GNU General Public License.  See
 the COPYING file for more information.
