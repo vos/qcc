@@ -43,6 +43,11 @@ The QCC-client uses a simple to use GUI which should be self-explanatory.  If yo
 If you don't supply any port, the default port **54321** is used automatically.
 
 
+## Documentation
+
+The generated HTML-documentation of the source code can be viewed online at http://vos.github.com/qcc/.
+
+
 ## License
 
 Copyright (C) 2011 Alexander Vos, Kai Wellmann.
